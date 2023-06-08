@@ -1,0 +1,14 @@
+#N canvas 327 322 492 388 12;
+#X obj 88 127 list split 1;
+#X obj 134 177 list;
+#X obj 88 221 t s b;
+#X obj 78 14 cnv 19 126 76 empty empty empty 20 12 0 12 #e0e0e0 #404040 0;
+#X obj 88 59 inlet;
+#X text 87 25 input list;
+#X obj 88 272 outlet;
+#X connect 0 0 2 0;
+#X connect 0 1 1 1;
+#X connect 1 0 0 0;
+#X connect 2 0 6 0;
+#X connect 2 1 1 0;
+#X connect 4 0 0 0;

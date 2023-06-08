@@ -1,0 +1,12 @@
+#N canvas 1808 38 864 804 12;
+#X obj 96 69 cyclone/listfunnel;
+#X msg 509 335 /artwork/art1/motif/motion/moveX;
+#X msg 511 361 /artwork/art1/motif/line/enable;
+#X msg 511 392 /midi/note;
+#X msg 511 437 /scene/next;
+#X msg 251 153 /artwork/\$1/motif/physics/enable;
+#X floatatom 258 113 5 0 0 0 - - - 0;
+#X obj 251 264 print;
+#X msg 298 182 /artwork/\$1/position;
+#X connect 5 0 7 0;
+#X connect 6 0 5 0;
