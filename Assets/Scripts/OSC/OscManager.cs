@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using OscJack;
 using System;
-
+using System.Linq;
 
 public class OscManager : MonoBehaviour
 {
@@ -59,6 +59,16 @@ public class OscManager : MonoBehaviour
         newEndpoint.AddListener(listener);
         _endpoints.Add(newEndpoint);
         return newEndpoint;
+    }
+
+    public void RemoveEndpoint(string address)
+    {
+        var endpoint = _endpoints.FirstOrDefault(x => x.Address == address);
+        if (endpoint != null)
+        {
+            endpoint.Deactivate();
+            _endpoints.Remove(endpoint);
+        }
     }
 
 

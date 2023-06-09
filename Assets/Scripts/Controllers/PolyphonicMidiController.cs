@@ -20,7 +20,6 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
 
     void Start()
     {
-        RegisterEndpoints();
         _moveables.AddRange(FindObjectsOfType<Moveable>());
         
         for (int i = 0; i < _moveables.Count; i++)
@@ -57,6 +56,11 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
                 // }, 0.3f, this);
             });
         }
+    }
+
+    void OnEnable()
+    {
+        RegisterEndpoints();
     }
 
     private IEnumerator ScaleTo(Moveable moveable, Vector3 newScale, float durationAttack, float durationDecay)

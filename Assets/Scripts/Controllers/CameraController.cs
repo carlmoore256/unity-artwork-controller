@@ -32,13 +32,14 @@ public class CameraController : MonoBehaviour, IOscControllable
     private void Start()
     {
         _moveable = GetComponent<Moveable>();
-        RegisterEndpoints();
 
         _originalPosition = new TransformSnapshot(gameObject.transform);
     }
 
     private void OnEnable()
     {
+        RegisterEndpoints();
+
         _rigidbody = GetComponent<Rigidbody>();
         _playerInputActions = new PlayerInputActions();
         _playerInputActions.Camera.Enable();
@@ -53,7 +54,10 @@ public class CameraController : MonoBehaviour, IOscControllable
     }
 
     private void OnDisable()
-    {
+    {   
+        // OscManager.Instance.RemoveEndpoint
+
+
         _playerInputActions.Camera.Disable();
         _playerInputActions.Camera.Translate.performed -= OnTranslate;
         _playerInputActions.Camera.Up.performed -= OnMoveUp;

@@ -43,25 +43,36 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
             
         }
 
+    }
+
+    void OnEnable()
+    {
         RegisterEndpoints();
     }
 
     void OnDisable()
     {
-        foreach(var moveable in _moveables)
-        {
-            
-        }
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/sinX");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/cosY");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/sinZ");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/speed");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/range");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lookAtCamera");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/reset");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpCenter");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpReset");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpTarget");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableMotion");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtTarget");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtCamera");
+        
     }
 
     // idea : add a camera controller
 
     public void RegisterEndpoints()
     {
-        Debug.Log("Adding Endpoints " + OscManager.Instance);
-               
         OscManager.Instance.AddEndpoint($"{OscAddress}/sinX", (OscDataHandle dataHandle) => {
-            Debug.Log($"Move X called! Amount: {dataHandle.GetElementAsFloat(0)}");
             _moveXAmount = dataHandle.GetElementAsFloat(0);
         });
 
@@ -70,7 +81,6 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/sinZ", (OscDataHandle dataHandle) => {
-            Debug.Log("Sin z amount " +  dataHandle.GetElementAsFloat(0));
             _moveZAmount = dataHandle.GetElementAsFloat(0);
         });
 
@@ -103,15 +113,12 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
             float value = dataHandle.GetElementAsFloat(0);
             foreach(var moveable in _moveables)
             {
-                // TransformSnapshot snapshot = 
                 var newPos = Vector3.Lerp(_targetSnapshots[moveable].Position, center, value);
                 _targetSnapshots[moveable].Position = newPos;
-                // moveable.LerpTo(center, dataHandle.GetElementAsFloat(0));
             }
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/lerpReset", (OscDataHandle dataHandle) => {
-            Debug.Log("Lerp Reset called!");
             foreach(var moveable in _moveables)
             {
                 moveable.LerpToDefault(dataHandle.GetElementAsFloat(0));

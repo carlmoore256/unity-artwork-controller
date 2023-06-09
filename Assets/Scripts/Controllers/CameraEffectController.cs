@@ -9,7 +9,19 @@ public class CameraEffectController : MonoBehaviour, IOscControllable
 
     private void Start()
     {
+    }
+
+    void OnEnable()
+    {
         RegisterEndpoints();
+    }
+
+    void OnDisable()
+    {
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/kaleidoscope/toggle");
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/toggle");
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/kaliedoscope/intensity");
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/intensity");
     }
 
     public void RegisterEndpoints()

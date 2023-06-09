@@ -6,8 +6,10 @@ using System.Linq;
 public class MaskLayer : MonoBehaviour
 {
     private SpriteRenderer _backgroundSprite;
-    private float _phase = 0;
     private List<SpriteRenderer> _imageRenderers = new List<SpriteRenderer>();
+
+    // private float _huePhase = 0;
+    private Color _originalColor;
 
     private void Awake()
     {
@@ -19,7 +21,9 @@ public class MaskLayer : MonoBehaviour
             _backgroundSprite = backgroundSprites[0];
         }
 
-        _phase = Random.Range(0, 1f);
+        _originalColor = GetColor();
+
+        // _huePhase = Random.Range(0, 1f);
     }
 
     public void AddRenderer(SpriteRenderer renderer)
@@ -40,7 +44,38 @@ public class MaskLayer : MonoBehaviour
 
     public void SetColor(Color color)
     {
+        // _backgroundSprite.material.SetColor("_Color", color);
         _backgroundSprite.material.SetColor("_Color", color);
+    }
+
+    public void SetHueOffset(float offset)
+    {
+        // Color currentColor = GetColor();
+
+        // get the hsl of the current
+        float H, S, V;
+        Color.RGBToHSV(_originalColor, out H, out S, out V);
+
+        // Debug.Log("Hue: " + H + " Offset: " + offset + " New Hue: " + (H + offset));
+
+        // set saturation to a cosine
+        S = Mathf.Cos((offset * Mathf.PI * 2f) + Mathf.PI) * 0.5f + 0.5f;
+
+        // add the offset
+        H += offset;
+        H = H % 1f;
+
+        // set the new color
+        Color newColor = Color.HSVToRGB(H, S, V);
+        // Debug.Log("old color" + _originalColor + "New Color: " + newColor);
+        SetColor(newColor);
+    }
+
+    // public void SetSaturationOffset()
+
+    public void ResetColor()
+    {
+        SetColor(_originalColor);
     }
 
 

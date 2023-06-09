@@ -37,6 +37,13 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
         RegisterEndpoints();
     }
 
+    void OnDisable()
+    {
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/togglePhysics");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleGravity");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/explode");
+    }
+
     public void RegisterEndpoints()
     {
         // make these endpoints fill in controller as the gameObject name

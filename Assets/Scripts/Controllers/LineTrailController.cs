@@ -49,7 +49,16 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
             }
         }
 
+    }
+
+    void OnEnable()
+    {
         RegisterEndpoints();
+    }
+
+    void OnDisable()
+    {
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggle");
     }
 
     public void RegisterEndpoints() {

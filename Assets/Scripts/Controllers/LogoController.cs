@@ -19,7 +19,19 @@ public class LogoController : MonoBehaviour, IOscControllable
             Debug.Log(logo.Id);
             // logo.gameObject.SetActive(false);
         }
+    }
+
+    void OnEnable()
+    {
         RegisterEndpoints();
+    }
+
+
+    void OnDisable()
+    {
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLogo");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/disableLogo");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleLogo");
     }
 
     public void RegisterEndpoints()

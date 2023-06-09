@@ -39,7 +39,7 @@ Shader "Custom/Wavy" {
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-                o.worldNormal = mul(unity_ObjectToWorld, v.normal).xyz;
+                // o.worldNormal = mul(unity_ObjectToWorld, v.normal).xyz;
                 return o;
             }
  

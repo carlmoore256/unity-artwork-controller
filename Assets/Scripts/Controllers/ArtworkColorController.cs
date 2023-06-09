@@ -9,7 +9,7 @@ public class LayerColor
     public Color Color { get; private set; }
     public float Opacity;
     public float FadeOffset;
-    public float Rotation;
+    public float HueOffset;
     public MaskLayer[] Masks;
 
     private float _curve = 1.5f;
@@ -18,7 +18,7 @@ public class LayerColor
     {
         Masks = masks;
         Opacity = 1f;
-        Rotation = 0f;
+        HueOffset = 0f;
         Color = Color.white;
         _curve = Random.Range(0.5f, 2.5f);
     }
@@ -46,6 +46,16 @@ public class LayerColor
             mask.SetAlpha(Opacity);
         }
     }
+
+    public void SetHueOffset(float offset)
+    {
+        HueOffset = offset;
+
+        foreach (var mask in Masks)
+        {
+            mask.SetHueOffset(offset);
+        }
+    }
 }
 
 // [RequireComponent(typeof(Moveable))]
@@ -62,7 +72,6 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
     void Start()
     {
         _moveable = GetComponent<Moveable>();
-        RegisterEndpoints();
 
 
         var allMaskLayers = GetComponentsInChildren<MaskLayer>();
@@ -101,6 +110,18 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
         }
     }
 
+    void OnEnable()
+    {
+        RegisterEndpoints();
+    }
+
+    void OnDisable()
+    {
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/opacity");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/rotate");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/color");
+    }
+
     public void RegisterEndpoints()
     {
 
@@ -112,37 +133,20 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
                 layer.SetAlpha(fade);
             }
         });
+
         
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/rotate", (OscDataHandle dataHandle) => {
 
+            var value = dataHandle.GetElementAsFloat(0);
+            Debug.Log($"rotate {value}");
             foreach(var layer in _groupedLayers)
             {
-                // layer.Rotation = dataHandle.GetElementAsFloat(0);
-                Color currentColor = layer.Color;
-                Color newColor = new Color(
-                    Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f),
-                    Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f),
-                    Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f),
-                    currentColor.a
-                );
-
-                layer.SetColor(newColor);
+                foreach(var mask in layer.Masks)
+                {
+                    mask.SetHueOffset(value);
+                }
             }
-
-            // var layers = GetComponentsInChildren<MaskLayer>();
-            // foreach(var layer in layers)
-            // {
-            //     Color currentColor = layer.GetColor();
-            //     Color newColor = new Color(
-            //         Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f),
-            //         Mathf.Clamp(dataHandle.GetElementAsFloat(1), 0f, 1f),
-            //         Mathf.Clamp(dataHandle.GetElementAsFloat(2), 0f, 1f),
-            //         currentColor.a
-            //     );
-
-            //     layer.SetColor(newColor);
-            // }
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/fadeIn", (OscDataHandle dataHandle) => {
@@ -200,23 +204,15 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
     }
 }
 
-// OscManager.Instance.AddEndpoint("/controller/moveZ", (OscDataHandle dataHandle) => {
-//     Debug.Log("Move Z called! Amount: " + dataHandle.GetElementAsFloat(0));
-//     var currentPos = transform.position;
-//     currentPos.z = dataHandle.GetElementAsFloat(0);
-//     _moveable.MoveTo(currentPos, 0.6f);
-// });
 
-// OscManager.Instance.AddEndpoint("/controller/rotateX", (OscDataHandle dataHandle) => {
-//     var currentRot = transform.rotation;
-//     Vector3 euler = currentRot.eulerAngles;
-//     euler.x += dataHandle.GetElementAsFloat(0);
-//     _moveable.RotateTo(Quaternion.Euler(euler.x, euler.y, euler.z), 0.6f);
-// });
 
-// OscManager.Instance.AddEndpoint("/controller/rotateY", (OscDataHandle dataHandle) => {
-//     var currentRot = transform.rotation;
-//     Vector3 euler = currentRot.eulerAngles;
-//     euler.y += dataHandle.GetElementAsFloat(0);
-//     _moveable.RotateTo(Quaternion.Euler(euler.x, euler.y, euler.z), 0.6f);
-// });
+// layer.Rotation = dataHandle.GetElementAsFloat(0);
+// Color currentColor = layer.Color;
+// Color newColor = new Color(
+//     Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f),
+//     Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f),
+//     Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f),
+//     currentColor.a
+// );
+
+// layer.SetColor(newColor);

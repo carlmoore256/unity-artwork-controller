@@ -13,8 +13,6 @@ public class MotifController : MonoBehaviour, IOscControllable, IArtworkControll
 
     void Start() 
     {
-        RegisterEndpoints();
-
         if (_background == null)
         {
             var bg = gameObject.transform.Find("image-orig(Clone)");
@@ -22,6 +20,16 @@ public class MotifController : MonoBehaviour, IOscControllable, IArtworkControll
                 _background = bg.gameObject;
             }
         }
+    }
+
+    void OnEnable()
+    {
+        RegisterEndpoints();
+    }
+
+    void OnDisable()
+    {
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/bgFade");
     }
 
     public void RegisterEndpoints()

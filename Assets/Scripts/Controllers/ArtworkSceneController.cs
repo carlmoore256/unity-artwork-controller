@@ -18,9 +18,11 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
         if (_artworkPrefabs.Length == 0) {
             throw new System.Exception($"No Artwork Prefabs found in Resources/{ResourcePath}");
         }
+
+        Artworks = _artworkPrefabs.Select(x => x.GetComponent<Artwork>()).ToList();
         
         // get all elements in scene with Artwork
-        Artworks = FindObjectsOfType<Artwork>(true).ToList();
+        // Artworks = FindObjectsOfType<Artwork>(true).ToList();
         Debug.Log("START NUMBER OF ARTWORKS " + Artworks.Count);
 
         foreach (var artwork in Artworks)
@@ -29,8 +31,20 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
             artwork.gameObject.SetActive(false);
         }
 
+        // RegisterEndpoints();
+    }
 
+    void OnEnable()
+    {
         RegisterEndpoints();
+    }
+
+    void OnDisable()
+    {
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleArtwork");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/selectArtwork");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableArtwork");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/disableArtwork");
     }
 
     public void RegisterEndpoints()
