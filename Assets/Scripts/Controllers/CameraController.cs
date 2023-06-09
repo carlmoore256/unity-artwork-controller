@@ -22,7 +22,7 @@ public class CameraController : MonoBehaviour, IOscControllable
     private Vector2 _translateInput;
     private Vector2 _rotateInput;
     private float _verticalInput;
-    private SceneController _sceneController;
+    private ArtworkSceneController _sceneController;
 
     private float _orbitDistance = 10f;
 
@@ -48,7 +48,7 @@ public class CameraController : MonoBehaviour, IOscControllable
         _playerInputActions.Camera.Look.performed += OnLook;
         _playerInputActions.Camera.Reset.performed += ResetCamera;
 
-        _sceneController = FindObjectOfType<SceneController>();
+        _sceneController = FindObjectOfType<ArtworkSceneController>();
         _orbitTarget = _sceneController.transform;
     }
 

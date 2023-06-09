@@ -4,18 +4,33 @@ using UnityEngine;
 using OscJack;
 using System.Linq;
 
-public class SceneController : MonoBehaviour, IOscControllable
+public class ArtworkSceneController : MonoBehaviour, IOscControllable
 {
     public string OscAddress => "/scene";
     private int _currentlySelectedArtworkId = 0;
     public List<Artwork> Artworks = new List<Artwork>();
+    private GameObject[] _artworkPrefabs;
+    public string ResourcePath = "Artworks";
 
     void Start()
     {
-        RegisterEndpoints();
+        _artworkPrefabs = Resources.LoadAll<GameObject>(ResourcePath);
+        if (_artworkPrefabs.Length == 0) {
+            throw new System.Exception($"No Artwork Prefabs found in Resources/{ResourcePath}");
+        }
+        
         // get all elements in scene with Artwork
         Artworks = FindObjectsOfType<Artwork>(true).ToList();
         Debug.Log("START NUMBER OF ARTWORKS " + Artworks.Count);
+
+        foreach (var artwork in Artworks)
+        {
+            artwork.Id = Artworks.IndexOf(artwork);
+            artwork.gameObject.SetActive(false);
+        }
+
+
+        RegisterEndpoints();
     }
 
     public void RegisterEndpoints()
@@ -33,9 +48,43 @@ public class SceneController : MonoBehaviour, IOscControllable
             _currentlySelectedArtworkId = dataHandle.GetElementAsInt(0);
             Debug.Log($"Selected Artwork {_currentlySelectedArtworkId}");
         });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/enableArtwork", (OscDataHandle dataHandle) => {
+            var value = dataHandle.GetElementAsString(0);
+            Debug.Log($"Enable Artwork {value}");
+            EnableArtwork(value);
+        });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/disableArtwork", (OscDataHandle dataHandle) => {
+            var value = dataHandle.GetElementAsString(0);
+            Debug.Log($"Disable Artwork {value}");
+            DisableArtwork(value);
+        });
     }
 
     int index = 0;
+
+    private void EnableArtwork(string name)
+    {
+        // find any artworks after splitting name after __
+        var artwork = Artworks.Find(x => x.gameObject.name == $"Artwork__{name}");
+        if (artwork == null) return;
+        Debug.Log($"Enabling Artwork {artwork.gameObject.name}");
+        artwork.gameObject.SetActive(true);
+        var colorController = artwork.gameObject.GetComponent<ArtworkColorController>();
+        colorController.FadeInEffect(0, 5);
+    }
+
+    private void DisableArtwork(string name)
+    {
+        var artwork = Artworks.Find(x => x.gameObject.name == $"Artwork__{name}");
+        if (artwork == null) return;
+        Debug.Log($"Disabling Artwork {artwork.gameObject.name}");
+        StartCoroutine(ToggleOffArtwork(artwork.gameObject.GetComponent<ArtworkColorController>()));
+
+        // var colorController = artwork.gameObject.GetComponent<ArtworkColorController>();
+        // colorController.FadeOutEffect(0, 5);
+    }
 
     private void ToggleArtwork(int id) {
         
@@ -51,8 +100,9 @@ public class SceneController : MonoBehaviour, IOscControllable
         {
             StartCoroutine(ToggleOffArtwork(artwork.gameObject.GetComponent<ArtworkColorController>()));
         } else {
+            artwork.gameObject.SetActive(true);
             var colorController = artwork.gameObject.GetComponent<ArtworkColorController>();
-            colorController.gameObject.SetActive(true);
+            // colorController.gameObject.SetActive(true);
             colorController.FadeInEffect(0, 5);
         }
 

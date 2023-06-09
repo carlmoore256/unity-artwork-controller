@@ -15,7 +15,25 @@ public static class CoroutineHelpers
         monoBehaviour.StartCoroutine(DelayedAction(action, delay));
     }
 
-    public static IEnumerator ChangeColor(object obj, Color startColor, Color endColor, float duration)
+    public static void LerpAction(Action<float> action, Action onComplete, float duration, MonoBehaviour monoBehaviour)
+    {
+        monoBehaviour.StartCoroutine(LerpAction(action, duration));
+    }
+
+
+    private static IEnumerator LerpAction(Action<float> action, float duration)
+    {
+        float startTime = Time.time;
+        float endTime = startTime + duration;
+        while (Time.time < endTime)
+        {
+            float t = (Time.time - startTime) / duration;
+            action(t);
+            yield return null;
+        }
+    }
+
+    private static IEnumerator ChangeColor(object obj, Color startColor, Color endColor, float duration)
     {
         float startTime = Time.time;
         float endTime = startTime + duration;

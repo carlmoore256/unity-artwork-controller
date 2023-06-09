@@ -24,7 +24,7 @@ MonoBehaviour:
     value: 0.99
   softKnee:
     overrideState: 1
-    value: 0.488
+    value: 0.833
   clamp:
     overrideState: 0
     value: 65472
@@ -131,12 +131,12 @@ MonoBehaviour:
     overrideState: 1
     value: 1
   spectralLut:
-    overrideState: 0
+    overrideState: 1
     value: {fileID: 0}
     defaultState: 1
   intensity:
-    overrideState: 0
-    value: 0.527
+    overrideState: 1
+    value: 0.619
   fastMode:
     overrideState: 0
     value: 0

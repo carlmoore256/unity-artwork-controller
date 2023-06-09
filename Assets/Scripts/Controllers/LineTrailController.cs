@@ -18,18 +18,17 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
     public Artwork Artwork => GetComponent<Artwork>();
     public string OscAddress => $"/artwork/{Artwork.Id}/line";
 
-    private void OnValidate()
-    {
-        // This method will be called whenever 'myValue' is modified in the inspector
+    // private void OnValidate()
+    // {
+    //     // This method will be called whenever 'myValue' is modified in the inspector
         
-        // Add your desired response or logic here
-        Debug.Log("Value changed: " + _trailLength);
+    //     // Add your desired response or logic here
 
-        foreach(var lineTrail in _lineTrails)
-        {
-            lineTrail.SetLineCount(_trailLength);
-        }
-    }
+    //     foreach(var lineTrail in _lineTrails)
+    //     {
+    //         lineTrail.SetLineCount(_trailLength);
+    //     }
+    // }
 
     // Start is called before the first frame update
     void Start()
