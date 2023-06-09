@@ -21,6 +21,9 @@ public class MaskLayer : MonoBehaviour
             _backgroundSprite = backgroundSprites[0];
         }
 
+        _imageRenderers.Add(_backgroundSprite);
+        _imageRenderers.Add(GetComponent<SpriteRenderer>());
+
         _originalColor = GetColor();
 
         // _huePhase = Random.Range(0, 1f);
@@ -44,14 +47,15 @@ public class MaskLayer : MonoBehaviour
 
     public void SetColor(Color color)
     {
-        // _backgroundSprite.material.SetColor("_Color", color);
-        _backgroundSprite.material.SetColor("_Color", color);
+        // _backgroundSprite.color = color;
+        foreach(var renderer in _imageRenderers)
+        {
+            renderer.color = color;
+        }
     }
 
     public void SetHueOffset(float offset)
     {
-        // Color currentColor = GetColor();
-
         // get the hsl of the current
         float H, S, V;
         Color.RGBToHSV(_originalColor, out H, out S, out V);
@@ -67,11 +71,12 @@ public class MaskLayer : MonoBehaviour
 
         // set the new color
         Color newColor = Color.HSVToRGB(H, S, V);
-        // Debug.Log("old color" + _originalColor + "New Color: " + newColor);
+
+        Color currentColor = GetColor();
+
+        newColor.a = currentColor.a;
         SetColor(newColor);
     }
-
-    // public void SetSaturationOffset()
 
     public void ResetColor()
     {
@@ -79,18 +84,21 @@ public class MaskLayer : MonoBehaviour
     }
 
 
-    public void SetAlpha(float alpha)
+    public void SetOpacity(float alpha)
     {
-        Color newColor = _backgroundSprite.material.GetColor("_Color");
-        newColor.a = alpha;
-        _backgroundSprite.material.SetColor("_Color", newColor);
+        Color currentColor = _backgroundSprite.color;
+        Color transparentColor = new Color(currentColor.r, currentColor.g, currentColor.b, alpha);
+        foreach(var renderer in _imageRenderers)
+        {
+            renderer.color = transparentColor; 
+        }
     }
 
     public Color GetColor()
     {
         if (_backgroundSprite != null)
         {
-            return _backgroundSprite.material.GetColor("_Color");
+            return _backgroundSprite.color;
         }
         else
         {

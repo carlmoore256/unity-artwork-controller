@@ -9,7 +9,7 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
     public int _artworkId = 0;
     public int ArtworkId => _artworkId;
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/motion";
+    public string OscAddress => $"/artwork/{Artwork.Index}/motion";
 
     private List<Moveable> _moveables = new List<Moveable>();
     private Dictionary<Moveable, TransformSnapshot> _targetSnapshots = new Dictionary<Moveable, TransformSnapshot>();
@@ -52,6 +52,8 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
 
     void OnDisable()
     {
+        if (OscManager.Instance == null)
+            return;
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/sinX");
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/cosY");
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/sinZ");

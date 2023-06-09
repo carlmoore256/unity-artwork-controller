@@ -43,7 +43,7 @@ public class LayerColor
         Opacity = Mathf.Pow(alpha, _curve);
         foreach (var mask in Masks)
         {
-            mask.SetAlpha(Opacity);
+            mask.SetOpacity(Opacity);
         }
     }
 
@@ -62,7 +62,7 @@ public class LayerColor
 public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkController
 {
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/color";
+    public string OscAddress => $"/artwork/{Artwork.Index}/color";
     private Moveable _moveable;
 
     // group these if they are in a motif group
@@ -117,6 +117,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
 
     void OnDisable()
     {
+        if (OscManager.Instance == null) return;
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/opacity");
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/rotate");
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/color");

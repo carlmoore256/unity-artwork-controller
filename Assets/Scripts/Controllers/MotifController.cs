@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using OscJack;
 
+
+// CONSIDER REMOVING! ARTWORK TAKES CARE OF THIS
 public class MotifController : MonoBehaviour, IOscControllable, IArtworkController
 {
-
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"artwork/{Artwork.Id}/motif";
+    public string OscAddress => $"artwork/{Artwork.Index}/motif";
 
     [SerializeField] private GameObject _background;
 
@@ -31,6 +32,7 @@ public class MotifController : MonoBehaviour, IOscControllable, IArtworkControll
     {
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/bgFade");
     }
+
 
     public void RegisterEndpoints()
     {

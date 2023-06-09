@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System;
 
-[ExecuteInEditMode, RequireComponent(typeof(Camera)), RequireComponent(typeof(CameraEffectController))]
+[ExecuteInEditMode, RequireComponent(typeof(Camera)), RequireComponent(typeof(PostProcessingController))]
 public class EchoEffect : MonoBehaviour, ICameraEffect
 {
     [SerializeField] private float _fadeDuration = 1f;

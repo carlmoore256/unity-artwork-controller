@@ -16,7 +16,7 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
     private List<LineTrail> _lineTrails = new List<LineTrail>();
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/line";
+    public string OscAddress => $"/artwork/{Artwork.Index}/line";
 
     // private void OnValidate()
     // {

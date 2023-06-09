@@ -1,11 +1,12 @@
 using UnityEngine;
 using OscJack;
 
-public class CameraEffectController : MonoBehaviour, IOscControllable
+public class PostProcessingController : MonoBehaviour, IOscControllable
 {
     public string OscAddress => "/camera";
 
     private float _minMIDIValue = 0.01f;
+
 
     private void Start()
     {

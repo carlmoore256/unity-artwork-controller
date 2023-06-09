@@ -11,6 +11,11 @@ public class Moveable : MonoBehaviour
 
     public TransformSnapshot CurrentSnapshot { get { return new TransformSnapshot(transform); } }
 
+
+    public Vector3 DefaultPosition;
+    public Quaternion DefaultRotation;
+    public Vector3 DefaultScale;
+
     public TransformSnapshot DefaultSnapshot;
     private TransformSnapshot _referenceSnapshot;
     public TransformSnapshot TargetSnapshot;
@@ -32,6 +37,10 @@ public class Moveable : MonoBehaviour
     {
         DefaultSnapshot = new TransformSnapshot(transform);
         TargetSnapshot = new TransformSnapshot(transform);
+
+        DefaultPosition = transform.position;
+        DefaultRotation = transform.rotation;
+        DefaultScale = transform.localScale;
     }
 
     void OnEnable()
@@ -46,48 +55,67 @@ public class Moveable : MonoBehaviour
         UseLocal);
     }
 
-    public void TransformTo(TransformSnapshot snapshot, float duration=-1)
+    public void TransformTo(TransformSnapshot snapshot, float duration=-1, Action onComplete=null)
     {
         if (duration == -1) duration = DefaultDuration;
-        // CoroutineManager.TransformTo(snapshot, duration);
         TargetSnapshot = snapshot;
+
+        if (onComplete != null) {
+            CoroutineHelpers.DelayedAction(onComplete, duration, this);
+        }
     }
 
-    public void MoveTo(Vector3 position, float duration=-1)
+    public void MoveTo(Vector3 position, float duration=-1, Action onComplete=null)
     {
         if (duration == -1) duration = DefaultDuration;
-        // CoroutineManager.MoveTo(position, duration);
         TargetSnapshot.Position = position;
+
+        if (onComplete != null) {
+            CoroutineHelpers.DelayedAction(onComplete, duration, this);
+        }
     }
 
-    public void RotateTo(Quaternion rotation, float duration=-1)
+    public void RotateTo(Quaternion rotation, float duration=-1, Action onComplete=null)
     {
         if (duration == -1) duration = DefaultDuration;
-        // CoroutineManager.RotateTo(rotation, duration);
         TargetSnapshot.Rotation = rotation;
+
+        if (onComplete != null) {
+            CoroutineHelpers.DelayedAction(onComplete, duration, this);
+        }
     }
 
-    public void ScaleTo(Vector3 scale, float duration=-1)
+    public void ScaleTo(Vector3 scale, float duration=-1, Action onComplete=null)
     {
         if (duration == -1) duration = DefaultDuration;
         // CoroutineManager.ScaleTo(scale, duration);
         TargetSnapshot.Scale = scale;
+
+        if (onComplete != null) {
+            CoroutineHelpers.DelayedAction(onComplete, duration, this);
+        }
     }
 
-    public void LookAt(Vector3 target, float duration=-1)
+    public void LookAt(Vector3 target, float duration=-1, Action onComplete=null)
     {
         if (duration == -1) duration = DefaultDuration;
         Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
-        // CoroutineManager.RotateTo(targetRotation, duration);
         TargetSnapshot.Rotation = targetRotation;
+
+        if (onComplete != null) {
+            CoroutineHelpers.DelayedAction(onComplete, duration, this);
+        }
     }
 
-    public void ResetToDefault(float duration=-1)
+    public void ResetToDefault(float duration=-1, Action onComplete=null)
     {
         if (duration == -1) duration = DefaultDuration;
         // CoroutineManager.TransformTo(_defaultSnapshot, duration);
-        TargetSnapshot = DefaultSnapshot;
+        TargetSnapshot = DefaultSnapshot.Copy();
 
+        if (onComplete != null) {
+            CoroutineHelpers.DelayedAction(onComplete, duration, this);
+        }
     }
 
     // private Action<TransformSnapshot, TransformSnapshot, float> _lerpFunction;
@@ -95,7 +123,7 @@ public class Moveable : MonoBehaviour
 
     public void LerpToDefault(float t)
     {
-        _referenceSnapshot = DefaultSnapshot;
+        _referenceSnapshot = DefaultSnapshot.Copy();
         _lerp = t;
         // _lerpFunction = (_defaultSnapshot, _targetTransform.ToSnapshot(), t) => {
         //     var test = TransformSnapshot.Lerp(_defaultSnapshot, _targetTransform.ToSnapshot(), t);
@@ -125,4 +153,5 @@ public class Moveable : MonoBehaviour
             LookAt(LookAtTarget.position);
         }
     }
+
 }

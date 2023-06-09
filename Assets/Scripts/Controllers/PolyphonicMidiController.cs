@@ -9,14 +9,21 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
 {
     List<Moveable> _moveables = new List<Moveable>();
     Dictionary<int, float> _activeNotes = new Dictionary<int, float>();
-    private Dictionary<int, Action<float>> _noteOnActions = new Dictionary<int, Action<float>>();
+    private Dictionary<int, Action<int, float>> _noteOnActions = new Dictionary<int, Action<int, float>>();
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/midi";
+    public string OscAddress => $"/artwork/{Artwork.Index}/midi";
 
     public float scaleAmount = 5f;
+    public float sizeAttackTime = 0.1f;
+    public float sizeDecayTime = 1.5f;
 
     private Dictionary<int, Coroutine> _scaleCoroutines = new Dictionary<int, Coroutine>();
+
+    void OnEnable()
+    {
+        RegisterEndpoints();
+    }
 
     void Start()
     {
@@ -24,75 +31,61 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
         
         for (int i = 0; i < _moveables.Count; i++)
         {
-            var moveable = _moveables[i];
-            _noteOnActions.Add(i, (float velocity) => {
 
-                
-                
-                Debug.Log("Note On Action Called " + velocity);
-                // var currentSnapshot = moveable.CurrentSnapshot;
-                Vector3 originalScale = moveable.DefaultSnapshot.Scale;
+            // IDEA - we need to get these at their normalized index
+            // basically all of these controllers should be accessing the Motif object and not the moveable
+            // the motif can provide access to all of the apis we need to move and scale things
 
-                // var originalPosition = currentSnapshot.Position;
+            // var moveable = _moveables[i];
 
-                // Debug.Log("Sanity Check " + (float)originalScale.x * (1f + velocity));
+            _noteOnActions.Add(i, (int noteIndex, float velocity) => {
 
-                // Vector3 newScale = new Vector3(1 + ((float)originalScale.x * (1f + velocity)), 1 + ((float)originalScale.y * (1f + velocity)), 1 + ((float)originalScale.z * (1f + velocity)));
-                // newScale *= scaleAmount;
+                Vector3 originalScale = _moveables[noteIndex].DefaultSnapshot.Scale;
 
-                // Debug.Log("New Scale " + newScale);
+                if (_scaleCoroutines.ContainsKey(noteIndex))
+                    StopCoroutine(_scaleCoroutines[noteIndex]);
 
-                // // moveable.ScaleTo(newScale, 0.3f);
-                // moveable.gameObject.transform.localScale = newScale;
-
-                if (_scaleCoroutines.ContainsKey(i))
-                    StopCoroutine(_scaleCoroutines[i]);
-                _scaleCoroutines[i] = StartCoroutine(ScaleTo(moveable, originalScale, 0.1f, 0.3f));
-                // moveable.MoveTo(newPos, 0.7f);
-                // CoroutineHelpers.DelayedAction(() => {
-                //     Debug.Log("Resetting Scale to " + originalScale);
-                //     // moveable.ScaleTo(originalScale, 0.5f);
-                //     moveable.gameObject.transform.localScale = originalScale;
-                // }, 0.3f, this);
+                _scaleCoroutines[noteIndex] = StartCoroutine(
+                    ScaleTo(
+                        _moveables[noteIndex].gameObject, 
+                        originalScale * (1f + velocity) * scaleAmount, 
+                        originalScale, 
+                        sizeAttackTime,
+                        sizeDecayTime)
+                    );
             });
         }
     }
 
-    void OnEnable()
+    private IEnumerator ScaleTo(GameObject go, Vector3 newScale, Vector3 originalScale, float durationAttack, float durationDecay)
     {
-        RegisterEndpoints();
-    }
-
-    private IEnumerator ScaleTo(Moveable moveable, Vector3 newScale, float durationAttack, float durationDecay)
-    {
-        // var originalScale = moveable.CurrentSnapshot.Scale;
-        Vector3 originalScale = moveable.DefaultSnapshot.Scale;
-
-        newScale = moveable.gameObject.transform.localScale * scaleAmount;
         var t = 0f;
-        while (t < 1f)
+        Vector3 initialScale = go.transform.localScale;
+
+
+
+        
+        while (t < durationAttack)
         {
             t += Time.deltaTime / durationAttack;
-            moveable.gameObject.transform.localScale = Vector3.Lerp(moveable.gameObject.transform.localScale, newScale, t);
+            go.transform.localScale = Vector3.Lerp(initialScale, newScale, t);
             yield return null;
         }
-
+        go.transform.localScale = newScale;
         t = 0f;
-        while (t < 1f)
+        while (t < durationDecay)
         {
             t += Time.deltaTime / durationDecay;
-            moveable.gameObject.transform.localScale = Vector3.Lerp(newScale, originalScale, t);
+            go.transform.localScale = Vector3.Lerp(newScale, originalScale, t);
             yield return null;
         }
+        go.transform.localScale = originalScale;
     }
 
-    // idea : add a camera controller
-    // idea : add support for ps4 controller
     public void RegisterEndpoints()
     {
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/note", (OscDataHandle dataHandle) => {
-            // Debug.Log("Note Received");
             var note = dataHandle.GetElementAsInt(0);
             var velocity = (float)dataHandle.GetElementAsInt(1)/127f;
             var channel = dataHandle.GetElementAsInt(2);
@@ -121,7 +114,7 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
         if(!_noteOnActions.ContainsKey(note)) {
             _noteOnActions[note] = null;
         }
-        _noteOnActions[note]?.Invoke(velocity);
+        _noteOnActions[note]?.Invoke(note, velocity);
     }
 
     void NoteOff(int note, float velocity)
@@ -129,7 +122,7 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
         // if not is in activeNotes    
         if (_activeNotes.ContainsKey(note)) {
             _activeNotes.Remove(note);
-            _noteOnActions[note]?.Invoke(velocity);
+            _noteOnActions[note]?.Invoke(note, velocity);
         }
     }
 

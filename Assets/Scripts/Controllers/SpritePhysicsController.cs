@@ -12,7 +12,7 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
     public bool GravityEnabled = false;
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/physics";
+    public string OscAddress => $"/artwork/{Artwork.Index}/physics";
 
 
     void OnEnable()
