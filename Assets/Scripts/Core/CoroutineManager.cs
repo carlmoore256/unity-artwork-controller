@@ -251,7 +251,7 @@ public class TransformCoroutineManager : CoroutineManager {
     public void TransformTo(TransformSnapshot snapshot, float duration = 1f) {
         MoveTo(snapshot.Position, duration);
         RotateTo(snapshot.Rotation, duration);
-        ScaleTo(snapshot.Scale, duration);
+        // ScaleTo(snapshot.Scale, duration);
     }
 
     public void SetTargetTransform(TransformSnapshot snapshot) {

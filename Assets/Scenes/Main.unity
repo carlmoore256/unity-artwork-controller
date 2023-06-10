@@ -578,8 +578,8 @@ GameObject:
   - component: {fileID: 912300670}
   - component: {fileID: 912300669}
   - component: {fileID: 912300672}
-  - component: {fileID: 912300673}
   - component: {fileID: 912300674}
+  - component: {fileID: 912300673}
   - component: {fileID: 912300675}
   m_Layer: 0
   m_Name: Main Camera
@@ -815,7 +815,7 @@ MonoBehaviour:
   _fadeDuration: 0
   _intensity: 1
   effectMaterial: {fileID: 2100000, guid: 8596136432c52c84c9a63e891ffc0595, type: 2}
-  reflections: 4
+  reflections: 20
   stretch: 1
 --- !u!114 &912300675
 MonoBehaviour:
@@ -1089,6 +1089,14 @@ PrefabInstance:
     - target: {fileID: 855948919803052610, guid: e530ef3627f73e947a533ae8aa7f96ed, type: 3}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6935005122770549724, guid: e530ef3627f73e947a533ae8aa7f96ed, type: 3}
+      propertyPath: _noteRangeLo
+      value: 43
+      objectReference: {fileID: 0}
+    - target: {fileID: 6935005122770549724, guid: e530ef3627f73e947a533ae8aa7f96ed, type: 3}
+      propertyPath: _sizeAttackTime
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 7247650546016127696, guid: e530ef3627f73e947a533ae8aa7f96ed, type: 3}
       propertyPath: m_TagString

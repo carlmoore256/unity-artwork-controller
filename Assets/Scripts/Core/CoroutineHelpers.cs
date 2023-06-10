@@ -4,7 +4,7 @@ using System.Collections;
 
 public static class CoroutineHelpers
 {
-    public static IEnumerator DelayedAction(Action action, float delay)
+    private static IEnumerator DelayedAction(Action action, float delay)
     {
         yield return new WaitForSeconds(delay);
         action();

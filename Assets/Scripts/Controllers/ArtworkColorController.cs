@@ -1,7 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using OscJack;
+using System;
 
 // [RequireComponent(typeof(Moveable))]
 public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkController
@@ -27,6 +26,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/opacity", (OscDataHandle dataHandle) => {
             var fade = dataHandle.GetElementAsFloat(0);
+            fade = Mathf.Clamp(fade, 0f, 1f);
             Artwork.ForeachMotif((motif) => {
                 motif.SetOpacity(fade);
             });
@@ -35,7 +35,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
         OscManager.Instance.AddEndpoint($"{OscAddress}/opacityDelayed", (OscDataHandle dataHandle) => {
             var fade = dataHandle.GetElementAsFloat(0);
             Artwork.ForeachMotif((motif, normIndex) => {
-                motif.SetOpacityDelayed(fade, normIndex);
+                motif.SetOpacitySmooth(fade, normIndex);
             });
         });
 
@@ -57,22 +57,28 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
         });
     }
 
-    public void FadeOutEffect(float waitTimeLow = 0f, float waitTimeHigh = 5f, float fadeTimeLow = 0.5f, float fadeTimeHigh = 2f)
+    public void FadeOutEffect(float waitTimeLow = 0f, float waitTimeHigh = 5f, float fadeTimeLow = 0.5f, float fadeTimeHigh = 2f, Action onComplete = null)
     {
+        float maxDelay = 0f;
         foreach(var motif in Artwork.Motifs)
         {
-            var delay = Random.Range(waitTimeLow, waitTimeHigh);
-            var duration = Random.Range(fadeTimeLow, fadeTimeHigh);
+            var delay = UnityEngine.Random.Range(waitTimeLow, waitTimeHigh);
+            var duration = UnityEngine.Random.Range(fadeTimeLow, fadeTimeHigh);
+            maxDelay = Mathf.Max(maxDelay, delay + duration);
             motif.FadeOut(delay, duration);
         }
+
+        CoroutineHelpers.DelayedAction(() => {
+            onComplete?.Invoke();
+        }, maxDelay, this);
     }
 
     public void FadeInEffect(float waitTimeLow = 0f, float waitTimeHigh = 5f, float fadeTimeLow = 0.5f, float fadeTimeHigh = 2f)
     {
         foreach(var motif in Artwork.Motifs)
         {
-            var delay = Random.Range(waitTimeLow, waitTimeHigh);
-            var duration = Random.Range(fadeTimeLow, fadeTimeHigh);
+            var delay = UnityEngine.Random.Range(waitTimeLow, waitTimeHigh);
+            var duration = UnityEngine.Random.Range(fadeTimeLow, fadeTimeHigh);
             motif.FadeIn(delay, duration);
         }
     }

@@ -7,16 +7,24 @@ using System;
 
 public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtworkController
 {
-    List<Moveable> _moveables = new List<Moveable>();
     Dictionary<int, float> _activeNotes = new Dictionary<int, float>();
     private Dictionary<int, Action<int, float>> _noteOnActions = new Dictionary<int, Action<int, float>>();
 
     public Artwork Artwork => GetComponent<Artwork>();
     public string OscAddress => $"/artwork/{Artwork.Index}/midi";
 
-    public float scaleAmount = 5f;
-    public float sizeAttackTime = 0.1f;
-    public float sizeDecayTime = 1.5f;
+    [SerializeField] private float _scaleAmount = 5f;
+    [SerializeField] private float _sizeAttackTime = 0.1f;
+    [SerializeField] private float _sizeReleaseTime = 1.5f;
+
+    [SerializeField] int _noteRangeHi = 127;
+    [SerializeField] int _noteRangeLo = 43;
+
+
+    [SerializeField] private bool _playAppear = true;
+    [SerializeField] private float _playAppearDuration = 1.0f;
+    [SerializeField] private int _numNearbyMotifs = 3;
+    [SerializeField] private float _nearbyMotifDistanceThresh = 1.0f;
 
     private Dictionary<int, Coroutine> _scaleCoroutines = new Dictionary<int, Coroutine>();
 
@@ -25,74 +33,18 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
         RegisterEndpoints();
     }
 
-    void Start()
-    {
-        _moveables.AddRange(FindObjectsOfType<Moveable>());
-        
-        for (int i = 0; i < _moveables.Count; i++)
-        {
-
-            // IDEA - we need to get these at their normalized index
-            // basically all of these controllers should be accessing the Motif object and not the moveable
-            // the motif can provide access to all of the apis we need to move and scale things
-
-            // var moveable = _moveables[i];
-
-            _noteOnActions.Add(i, (int noteIndex, float velocity) => {
-
-                Vector3 originalScale = _moveables[noteIndex].DefaultSnapshot.Scale;
-
-                if (_scaleCoroutines.ContainsKey(noteIndex))
-                    StopCoroutine(_scaleCoroutines[noteIndex]);
-
-                _scaleCoroutines[noteIndex] = StartCoroutine(
-                    ScaleTo(
-                        _moveables[noteIndex].gameObject, 
-                        originalScale * (1f + velocity) * scaleAmount, 
-                        originalScale, 
-                        sizeAttackTime,
-                        sizeDecayTime)
-                    );
-            });
-        }
-    }
-
-    private IEnumerator ScaleTo(GameObject go, Vector3 newScale, Vector3 originalScale, float durationAttack, float durationDecay)
-    {
-        var t = 0f;
-        Vector3 initialScale = go.transform.localScale;
-
-
-
-        
-        while (t < durationAttack)
-        {
-            t += Time.deltaTime / durationAttack;
-            go.transform.localScale = Vector3.Lerp(initialScale, newScale, t);
-            yield return null;
-        }
-        go.transform.localScale = newScale;
-        t = 0f;
-        while (t < durationDecay)
-        {
-            t += Time.deltaTime / durationDecay;
-            go.transform.localScale = Vector3.Lerp(newScale, originalScale, t);
-            yield return null;
-        }
-        go.transform.localScale = originalScale;
-    }
 
     public void RegisterEndpoints()
     {
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/note", (OscDataHandle dataHandle) => {
             var note = dataHandle.GetElementAsInt(0);
-            var velocity = (float)dataHandle.GetElementAsInt(1)/127f;
+            var velocity = (float)dataHandle.GetElementAsFloat(1);
             var channel = dataHandle.GetElementAsInt(2);
             
             Debug.Log($"Note: {note} Velocity: {velocity} Channel: {channel}");
 
-            NoteIn(note-43, 1f, channel);
+            NoteIn(note, velocity, channel);
         });
     }
 
@@ -100,30 +52,50 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
     {
         if (velocity > 0) {
             NoteOn(note, velocity);
-        }
-
-        if (velocity == 0) {
+        } else if (velocity == 0) {
             NoteOff(note, velocity);
         }
     }
 
+    private float NormalizedNote(int noteValue) 
+    {
+        return noteValue / (float)(_noteRangeHi - _noteRangeLo);
+    }
+    
 
     void NoteOn(int note, float velocity)
     {
-        _activeNotes[note] = velocity;
-        if(!_noteOnActions.ContainsKey(note)) {
-            _noteOnActions[note] = null;
+        // Moveable moveable = Artwork.GetMoveableAtNormalizedIndex(NormalizedNote(note));
+        Motif motif = Artwork.GetMotifAtNormalizedIndex(NormalizedNote(note));
+
+        motif.ForeachMoveable((moveable) => {
+            moveable.EnvelopeScale(1f + velocity * _scaleAmount, _sizeAttackTime, _sizeReleaseTime);
+        });
+
+        if (_playAppear) {
+            motif.SetOpacitySmooth(1f, 0.0f, _playAppearDuration);
         }
-        _noteOnActions[note]?.Invoke(note, velocity);
+
+
+        if (_numNearbyMotifs > 0) 
+        {
+            var nearbyMotifs = Artwork.GetNearbyMotifs(motif, _numNearbyMotifs, _nearbyMotifDistanceThresh);
+            foreach(var otherMotif in nearbyMotifs)
+            {
+                // make nearby motifs envelope scale, but at a different rate to highlight the main one
+                otherMotif.ForeachMoveable((moveable) => {
+                    moveable.EnvelopeScale(1f + velocity * _scaleAmount * UnityEngine.Random.Range(0.1f, 0.9f), _sizeAttackTime * 1.15f, _sizeReleaseTime * 0.75f);
+                });
+
+                if (_playAppear) {
+                    otherMotif.SetOpacitySmooth(1f, 0.0f, _playAppearDuration);
+                }
+            }
+        }
     }
 
     void NoteOff(int note, float velocity)
     {
-        // if not is in activeNotes    
-        if (_activeNotes.ContainsKey(note)) {
-            _activeNotes.Remove(note);
-            _noteOnActions[note]?.Invoke(note, velocity);
-        }
     }
 
 }

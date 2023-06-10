@@ -76,11 +76,11 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
         }
     }
 
-    public void SetOpacityDelayed(float opacity, float delay, bool useCurve = true)
+    public void SetOpacitySmooth(float opacity, float delay, float duration = 0.5f, bool useCurve = true)
     {
         if (useCurve) opacity = Mathf.Pow(opacity, _responseCurve);
         if (_opacityCoroutine != null) StopCoroutine(_opacityCoroutine);
-        _opacityCoroutine = StartCoroutine(OpacityCoroutine(opacity, 0.5f, delay));
+        _opacityCoroutine = StartCoroutine(OpacityCoroutine(opacity, duration, delay));
     }
 
 
@@ -187,6 +187,26 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
         SetColor(targetColor);
     }
 
+    /// maybe remove me, this is handled by artwork
+    public List<Motif> GetNearbyMotifs(int maxNum, float distanceThresh = 1f) 
+    {
+        List<Motif> nearbyMotifs = new List<Motif>();
+        var allMotifs = FindObjectsOfType<Motif>();
+        if (allMotifs.Length <= 1) return nearbyMotifs;
+
+        // sort by distance
+        var sortedMotifs = allMotifs.OrderBy(motif => Vector3.Distance(motif.GetPosition(), GetPosition()));
+        
+        foreach (var motif in sortedMotifs)
+        {
+            if (motif == this) continue;
+            float distance = Vector3.Distance(motif.GetPosition(), GetPosition());
+            if (distance > distanceThresh) break;
+            nearbyMotifs.Add(motif);
+            if (nearbyMotifs.Count >= maxNum) break;
+        }
+        return nearbyMotifs;
+    }
 
 
 
@@ -211,8 +231,7 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
     
     public T GetComponentAtNormalizedIndex<T>(float normalizedIndex) where T : Component
     {
-        if (normalizedIndex > 1) normalizedIndex = 1;
-        else if (normalizedIndex < 0) normalizedIndex = 0;
+        normalizedIndex = Mathf.Clamp01(normalizedIndex);
         return GetComponentsInChildren<T>()[Mathf.FloorToInt(normalizedIndex * GetComponentsInChildren<T>().Length)];
     }
 
@@ -244,8 +263,7 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
 
     public MaskLayer GetMaskLayerAtNormalizedIndex(float normalizedIndex)
     {
-        if (normalizedIndex > 1) normalizedIndex = 1;
-        else if (normalizedIndex < 0) normalizedIndex = 0;
+        normalizedIndex = Mathf.Clamp01(normalizedIndex);
         return MaskLayers[Mathf.FloorToInt(normalizedIndex * MaskLayers.Length)];
     }
 
@@ -260,6 +278,10 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
 
     public void ForeachMoveable(Action<Moveable> action)
     {
+        if (Moveables == null) {
+            Debug.LogError("Moveables is null", gameObject);
+            return;
+        };
         foreach (var moveable in Moveables)
         {
             action(moveable);
@@ -276,8 +298,7 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
 
     public Moveable GetMoveableAtNormalizedIndex(float normalizedIndex)
     {
-        if (normalizedIndex > 1) normalizedIndex = 1;
-        else if (normalizedIndex < 0) normalizedIndex = 0;
+        normalizedIndex = Mathf.Clamp01(normalizedIndex);
         return Moveables[Mathf.FloorToInt(normalizedIndex * Moveables.Length)];
     }
 

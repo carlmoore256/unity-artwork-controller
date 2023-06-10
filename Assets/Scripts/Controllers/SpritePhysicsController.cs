@@ -7,7 +7,7 @@ using System.Linq;
 public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtworkController
 {
 
-    private List<SpritePhysics> _spritePhysics = new List<SpritePhysics>();
+    private List<SpritePhysics> _allSpritePhysics;
     public bool PhysicsEnabled = false;
     public bool GravityEnabled = false;
 
@@ -15,25 +15,12 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
     public string OscAddress => $"/artwork/{Artwork.Index}/physics";
 
 
+    [SerializeField] private bool _physicsEnabled = false;
+    [SerializeField] private bool _gravityEnabled = false;
+
+
     void OnEnable()
     {
-        Debug.Log("Enabling Physics on all child sprites");
-        var moveables = GetComponentsInChildren<Moveable>();
-
-        foreach(var moveable in moveables)
-        {
-            if (gameObject == moveable.gameObject) continue;
-            if (moveable.GetComponent<SpriteRenderer>() == null) continue;
-            
-            SpritePhysics spritePhysics = null;
-            if (moveable.gameObject.GetComponent<SpritePhysics>() == null) {
-                spritePhysics = moveable.gameObject.AddComponent<SpritePhysics>();
-            } else {
-                spritePhysics = moveable.gameObject.GetComponent<SpritePhysics>();
-            }
-            _spritePhysics.Add(spritePhysics);
-        }
-
         RegisterEndpoints();
     }
 
@@ -48,21 +35,22 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
     {
         // make these endpoints fill in controller as the gameObject name
         OscManager.Instance.AddEndpoint($"{OscAddress}/togglePhysics", (OscDataHandle dataHandle) => {
-            PhysicsEnabled = !PhysicsEnabled;
-            Debug.Log("TOGGLING!!!");
-            ToggleSpritePhysics(PhysicsEnabled);
+            Debug.Log("Toggling Physics");
+            ToggleSpritePhysics();
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/toggleGravity", (OscDataHandle dataHandle) => {
             GravityEnabled = !GravityEnabled;
-            ToggleSpriteGravity(true);
+            ToggleSpriteGravity();
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/explode", (OscDataHandle dataHandle) => {
-            Vector3 center = _spritePhysics.Select(x => x.transform.position).Aggregate((acc, x) => acc + x) / _spritePhysics.Count;
+            if (!_physicsEnabled) return;
+
+            Vector3 center = _allSpritePhysics.Select(x => x.transform.position).Aggregate((acc, x) => acc + x) / _allSpritePhysics.Count;
 
             // explode away from center
-            foreach(var sprite in _spritePhysics)
+            foreach(var sprite in _allSpritePhysics)
             {
                 var direction = sprite.transform.position - center;
                 sprite.AddForce(direction * dataHandle.GetElementAsFloat(0));
@@ -70,18 +58,59 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
         });
     }
 
-
-    void ToggleSpritePhysics(bool enabled)
+    private void DisableSpritePhysicsComponents()
     {
-        foreach(var sprite in _spritePhysics)
-        {
-            sprite.TogglePhysics(enabled);
-        }
+        Artwork.ForeachMoveable((moveable) => {
+            if (gameObject == moveable.gameObject) return;
+            if (moveable.GetComponent<SpriteRenderer>() == null) return;
+            var spritePhysics = moveable.gameObject.GetComponent<SpritePhysics>();
+            if (spritePhysics != null) {
+                spritePhysics.enabled = false;
+            }
+        });
     }
 
-    void ToggleSpriteGravity(bool enabled)
+    private void EnableSpritePhysicsComponents()
     {
-        foreach(var sprite in _spritePhysics)
+        Debug.Log("Adding Physics components");
+        _allSpritePhysics = new List<SpritePhysics>();
+        Artwork.ForeachMoveable((moveable) => {
+            if (gameObject == moveable.gameObject) return;
+            if (moveable.GetComponent<SpriteRenderer>() == null) return;
+            
+            SpritePhysics spritePhysics = moveable.gameObject.GetComponent<SpritePhysics>();
+            if (spritePhysics != null) {
+                spritePhysics.enabled = true;
+            } else {
+                spritePhysics = moveable.gameObject.AddComponent<SpritePhysics>();
+                spritePhysics.enabled = true;
+            }
+            _allSpritePhysics.Add(spritePhysics);
+        });
+    }
+
+
+    void ToggleSpritePhysics()
+    {
+        _physicsEnabled = !_physicsEnabled;
+
+        if (_physicsEnabled) {
+            EnableSpritePhysicsComponents();
+            foreach(var sprite in _allSpritePhysics) {
+                sprite.TogglePhysics(enabled);
+            }
+        } else {
+            DisableSpritePhysicsComponents();
+        }
+
+
+    }
+
+    void ToggleSpriteGravity()
+    {
+        if (!_physicsEnabled) return;
+        
+        foreach(var sprite in _allSpritePhysics)
         {
             sprite.ToggleGravity(enabled);
         }

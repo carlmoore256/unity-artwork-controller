@@ -12,6 +12,7 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
     private GameObject[] _artworkPrefabs;
     private GameObject[] _activeArtworks;
     public string ResourcePath = "Artworks";
+    private readonly string _artworkNamePrefix = "Artwork__";
 
     void Start()
     {
@@ -20,30 +21,21 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
             throw new System.Exception($"No Artwork Prefabs found in Resources/{ResourcePath}");
         }
 
-
         foreach(var prefab in _artworkPrefabs)
         {
             Debug.Log("PREFAB " + prefab.name + " Id: " + prefab.GetComponent<Artwork>().Id);
         }
-
-        // ActiveArtworks = _artworkPrefabs.Select(x => x.GetComponent<Artwork>()).ToList();
-        
-        // // get all elements in scene with Artwork
-        // // Artworks = FindObjectsOfType<Artwork>(true).ToList();
-        // Debug.Log("START NUMBER OF ARTWORKS " + ActiveArtworks.Count);
-
-        // foreach (var artwork in ActiveArtworks)
-        // {
-        //     artwork.Index = ActiveArtworks.IndexOf(artwork);
-        //     artwork.gameObject.SetActive(false);
-        // }
-
-        // RegisterEndpoints();
     }
 
     void OnEnable()
     {
         RegisterEndpoints();
+
+        ActiveArtworks = new List<Artwork>();
+        GetComponentsInChildren<Artwork>().ToList().ForEach(x => {
+            ActiveArtworks.Add(x);
+        });
+
     }
 
     void OnDisable()
@@ -74,7 +66,7 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
         OscManager.Instance.AddEndpoint($"{OscAddress}/enableArtwork", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsString(0);
             Debug.Log($"Enable Artwork {value}");
-            EnableArtwork(value);
+            EnableArtworkById(value);
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/disableArtwork", (OscDataHandle dataHandle) => {
@@ -85,9 +77,17 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
     }
 
 
-    private void EnableArtwork(string id)
+    private void EnableArtworkById(string id)
     {
+        string artworkName = $"{_artworkNamePrefix}{id}";
         Debug.Log($"Attempting to enable Artwork {id}");
+
+        foreach(var i in ActiveArtworks.Select(x => x.Id))
+        {
+            Debug.Log($"Active Artwork {i}");
+        }
+
+        // find any existing gameobjects with the same name
         
         var artwork = ActiveArtworks.Find(x => x.Id == id);
         if (artwork != null) {
@@ -102,8 +102,15 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
         }
 
         var newArtwork = Instantiate(artworkPrefab, Vector3.zero, Quaternion.identity);
-        newArtwork.transform.parent = transform;     
-        artwork.gameObject.SetActive(true);
+        newArtwork.transform.parent = transform;
+
+        newArtwork.gameObject.name = artworkName;
+
+        ActiveArtworks.Add(newArtwork.GetComponent<Artwork>());
+
+        Debug.Log($"Enabling Artwork {newArtwork.name}");
+
+        // artwork.gameObject.SetActive(true);
 
         // var colorController = artwork.gameObject.GetComponent<ArtworkColorController>();
         // colorController.FadeInEffect(0, 5);
@@ -114,27 +121,11 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
 
     private void DisableArtwork(string id)
     {
-
+        var artwork = ActiveArtworks.Find(x => x.Id == id);
+        if (artwork == null) return;
+        Debug.Log($"Disabling Artwork {artwork.gameObject.name}");
+        artwork.RemoveFromScene();
     }
-
-    // private void EnableArtwork(string name)
-    // {
-    //     // find any artworks after splitting name after __
-    //     var artwork = Artworks.Find(x => x.gameObject.name == $"Artwork__{name}");
-    //     if (artwork == null) return;
-    //     Debug.Log($"Enabling Artwork {artwork.gameObject.name}");
-    //     artwork.gameObject.SetActive(true);
-    //     var colorController = artwork.gameObject.GetComponent<ArtworkColorController>();
-    //     colorController.FadeInEffect(0, 5);
-    // }
-
-    // private void DisableArtwork(string name)
-    // {
-    //     var artwork = Artworks.Find(x => x.gameObject.name == $"Artwork__{name}");
-    //     if (artwork == null) return;
-    //     Debug.Log($"Disabling Artwork {artwork.gameObject.name}");
-    //     StartCoroutine(ToggleOffArtwork(artwork.gameObject.GetComponent<ArtworkColorController>()));
-    // }
 
     private void ToggleArtwork(int index) {
         

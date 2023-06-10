@@ -34,7 +34,6 @@ public class Moveable : MonoBehaviour
     // private Quaternion _targetRotation;
     // public TransformSnapshot TargetSnapshot => new TransformSnapshot(_targetPosition, _targetRotation, _targetScale);
 
-
     void Start()
     {
         DefaultSnapshot = new TransformSnapshot(transform);
@@ -61,11 +60,6 @@ public class Moveable : MonoBehaviour
     {
         if (duration == -1) duration = DefaultDuration;
         TargetSnapshot = snapshot;
-
-        // _targetPosition = snapshot.Position;
-        // _targetRotation = snapshot.Rotation;
-        // _targetScale = snapshot.Scale;
-
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
@@ -75,9 +69,6 @@ public class Moveable : MonoBehaviour
     {
         if (duration == -1) duration = DefaultDuration;
         TargetSnapshot.Position = position;
-
-        // _targetPosition = position;
-
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
@@ -87,9 +78,6 @@ public class Moveable : MonoBehaviour
     {
         if (duration == -1) duration = DefaultDuration;
         TargetSnapshot.Rotation = rotation;
-
-        // _targetRotation = rotation;
-
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
@@ -99,12 +87,17 @@ public class Moveable : MonoBehaviour
     {
         if (duration == -1) duration = DefaultDuration;
         TargetSnapshot.Scale = scale;
-
-        // _targetScale = scale;
-
+        
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
+    }
+
+    public void EnvelopeScale(float scale, float timeAttack, float timeRelease, Action onComplete=null)
+    {
+        Vector3 newScale = DefaultSnapshot.Scale * scale;
+        if (_envelopeScaleCoroutine != null) StopCoroutine(_envelopeScaleCoroutine);
+        _envelopeScaleCoroutine = StartCoroutine(EnvelopeScaleCoroutine(newScale, DefaultSnapshot.Scale, timeAttack, timeRelease, onComplete));
     }
 
     public void LookAt(Vector3 target, float duration=-1, Action onComplete=null)
@@ -112,9 +105,6 @@ public class Moveable : MonoBehaviour
         if (duration == -1) duration = DefaultDuration;
         Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
         TargetSnapshot.Rotation = targetRotation;
-
-        // _targetRotation = targetRotation;
-
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
@@ -124,13 +114,6 @@ public class Moveable : MonoBehaviour
     {
         if (duration == -1) duration = DefaultDuration;
         TargetSnapshot = DefaultSnapshot.Copy();
-
-        // var defaultSnapshot = DefaultSnapshot.Copy();
-        // _targetPosition = defaultSnapshot.Position;
-        // _targetRotation = defaultSnapshot.Rotation;
-        // _targetScale = defaultSnapshot.Scale;
-
-
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
@@ -141,9 +124,6 @@ public class Moveable : MonoBehaviour
     {
         _referenceSnapshot = DefaultSnapshot.Copy();
         _lerp = t;
-        // _lerpFunction = (_defaultSnapshot, _targetTransform.ToSnapshot(), t) => {
-        //     var test = TransformSnapshot.Lerp(_defaultSnapshot, _targetTransform.ToSnapshot(), t);
-        // };
     }
 
     public void LerpToReference(TransformSnapshot reference, float t)
@@ -159,19 +139,57 @@ public class Moveable : MonoBehaviour
         {
             var lerp = TransformSnapshot.NewFromLerp(TargetSnapshot, _referenceSnapshot, _lerp);
             CoroutineManager.TransformTo(lerp, MoveDuration);
-            // var posLerp = Vector3.Lerp(_referenceSnapshot.Position, _targetPosition, _lerp);
-            // var rotLerp = Quaternion.Lerp(_referenceSnapshot.Rotation, _targetRotation, _lerp);
-            // var scaleLerp = Vector3.Lerp(_referenceSnapshot.Scale, _targetScale, _lerp);
-            // CoroutineManager.MoveTo(posLerp, MoveDuration);
-            // CoroutineManager.RotateTo(rotLerp, MoveDuration);
-            // CoroutineManager.ScaleTo(scaleLerp, MoveDuration);
-
         } else {
             CoroutineManager.TransformTo(TargetSnapshot, MoveDuration);
-            // CoroutineManager.MoveTo(_targetPosition, MoveDuration);
-            // CoroutineManager.RotateTo(_targetRotation, MoveDuration);
-            // CoroutineManager.ScaleTo(_targetScale, MoveDuration);
         }
     }
+
+    private Coroutine _envelopeScaleCoroutine;
+
+    private IEnumerator EnvelopeScaleCoroutine(Vector3 newScale, Vector3 endScale, float timeAttack, float timeRelease, Action onComplete=null)
+    {
+        var t = 0f;
+        Vector3 initialScale = transform.localScale;
+        while (t < 1)
+        {
+            t += Time.deltaTime / timeAttack;
+            transform.localScale = Vector3.Lerp(initialScale, newScale, t);
+            yield return null;
+        }
+        transform.localScale = newScale;
+        t = 0f;
+        while (t < 1)
+        {
+            t += Time.deltaTime / timeRelease;
+            transform.localScale = Vector3.Lerp(newScale, endScale, t);
+            yield return null;
+        }
+        transform.localScale = endScale;
+        if (onComplete != null) onComplete();
+    }
+
+
+    private Coroutine _scaleToCoroutine;
+    private IEnumerator ScaleToCoroutine(Vector3 newScale, Vector3 originalScale, float durationAttack, float durationDecay)
+    {
+        var t = 0f;
+        Vector3 initialScale = transform.localScale;
+        while (t < durationAttack)
+        {
+            t += Time.deltaTime / durationAttack;
+            transform.localScale = Vector3.Lerp(initialScale, newScale, t);
+            yield return null;
+        }
+        transform.localScale = newScale;
+        t = 0f;
+        while (t < durationDecay)
+        {
+            t += Time.deltaTime / durationDecay;
+            transform.localScale = Vector3.Lerp(newScale, originalScale, t);
+            yield return null;
+        }
+        transform.localScale = originalScale;
+    }
+
 
 }

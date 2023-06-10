@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-
+[RequireComponent(typeof(ArtworkColorController))]
 public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMovableIterator, IMotifIterator
 {
     [SerializeField] private int _index;
@@ -15,34 +15,45 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
     public List<Motif> Motifs = new List<Motif>();
 
 
-    private List<Moveable> _moveables = new List<Moveable>();
-    private List<MaskLayer> _maskLayers = new List<MaskLayer>();
+    private List<Moveable> _allMoveables = new List<Moveable>();
+    private List<MaskLayer> _allMaskLayers = new List<MaskLayer>();
 
-    public IEnumerable<MaskLayer> AllMaskLayers {
-        get {
-            if (_maskLayers == null) {
-                _maskLayers = Motifs.SelectMany(m => m.MaskLayers).ToList();
-            }
-            return _maskLayers;
-        }
-    } 
+    public IEnumerable<MaskLayer> AllMaskLayers => _allMaskLayers;
 
-    public IEnumerable<Moveable> AllMoveables {
-        get {
-            if (_moveables == null) {
-                _moveables = Motifs.SelectMany(m => m.Moveables).ToList();
-            }
-            return _moveables;
-        }
-    }
+    public IEnumerable<Moveable> AllMoveables => _allMoveables;
     
     // public IEnumerable<Moveable> AllMoveables => Motifs.SelectMany(m => m.Moveables); // call these less as they are more expensive
     
 
-    void Start()
+    private void Start()
     {
         InitializeMotifs();
     }
+
+
+    private void OnEnable()
+    {
+        // play the fade-in animation
+        var colorController = GetComponent<ArtworkColorController>();
+        if (colorController == null) {
+            colorController = gameObject.AddComponent<ArtworkColorController>();
+        }
+        colorController.FadeInEffect();
+    }
+
+    public void RemoveFromScene()
+    {
+        // destroys after things have faded out
+        var colorController = GetComponent<ArtworkColorController>();
+        if (colorController == null) {
+            colorController = gameObject.AddComponent<ArtworkColorController>();
+        }
+        colorController.FadeOutEffect(onComplete: () => {
+            Debug.Log($"Destroying Artwork: {gameObject.name}");
+            Destroy(gameObject);
+        });
+    }
+
 
     /// <summary>
     /// Add motif monobehaviours on to all direct descendents
@@ -62,8 +73,27 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
             }
             var motif = child.GetComponent<Motif>();
             if (motif == null) motif = child.gameObject.AddComponent<Motif>();
+            if (!child.gameObject.activeSelf) continue;
             Motifs.Add(motif);
         }
+
+        _allMoveables = Motifs.SelectMany(m => m.Moveables).ToList();
+        _allMaskLayers = Motifs.SelectMany(m => m.MaskLayers).ToList();
+    }
+
+    public List<Motif> GetNearbyMotifs(Motif motif, int maxNum, float distanceThresh)
+    {
+        var nearbyMotifs = new List<Motif>();
+        foreach (var otherMotif in Motifs)
+        {
+            if (otherMotif == motif) continue;
+            if (Vector3.Distance(motif.transform.position, otherMotif.transform.position) < distanceThresh)
+            {
+                nearbyMotifs.Add(otherMotif);
+                if (nearbyMotifs.Count >= maxNum) break;
+            }
+        }
+        return nearbyMotifs;
     }
 
     /// Preferred API for interacting with pieces of the artwork, since it allows
@@ -91,8 +121,12 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
 
     public Motif GetMotifAtNormalizedIndex(float normalizedIndex)
     {
-        if (normalizedIndex > 1) normalizedIndex = 1;
-        else if (normalizedIndex < 0) normalizedIndex = 0;
+        if (Motifs.Count == 0) return null;
+        normalizedIndex = Mathf.Clamp01(normalizedIndex);
+        Debug.Log("normalizedIndex" + normalizedIndex + " Number of Motifs " + Motifs.Count);
+        var index = Mathf.FloorToInt(normalizedIndex * Motifs.Count);
+        if (index == Motifs.Count) index = Motifs.Count - 1;
+        if (index < 0) index = 0;
         return Motifs.ElementAt(Mathf.FloorToInt(normalizedIndex * Motifs.Count));
     }
 
@@ -125,8 +159,12 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
 
     public T GetComponentAtNormalizedIndex<T>(float normalizedIndex) where T : Component
     {
-        if (normalizedIndex > 1) normalizedIndex = 1;
-        else if (normalizedIndex < 0) normalizedIndex = 0;
+        normalizedIndex = Mathf.Clamp01(normalizedIndex);
+        var index = Mathf.FloorToInt(normalizedIndex * Motifs.Count);
+        var components = GetComponentsInChildren<T>();
+        if (components.Count() == 0) return null;
+        if (index == Motifs.Count) index = components.Count() - 1;
+        if (index < 0) index = 0;
         return GetComponentsInChildren<T>()[Mathf.FloorToInt(normalizedIndex * GetComponentsInChildren<T>().Length)];
     }
 
@@ -160,9 +198,11 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
 
     public MaskLayer GetMaskLayerAtNormalizedIndex(float normalizedIndex)
     {
-        if (normalizedIndex > 1) normalizedIndex = 1;
-        else if (normalizedIndex < 0) normalizedIndex = 0;
-        return AllMaskLayers.ElementAt(Mathf.FloorToInt(normalizedIndex * AllMaskLayers.Count()));
+        if (AllMaskLayers.Count() == 0) return null;
+        normalizedIndex = Mathf.Clamp01(normalizedIndex);
+        var index = Mathf.FloorToInt(normalizedIndex * AllMaskLayers.Count());
+        if (index == AllMaskLayers.Count()) index = AllMaskLayers.Count() - 1;
+        return AllMaskLayers.ElementAt(index);
     }
 
     # endregion    
@@ -195,12 +235,42 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
 
     public Moveable GetMoveableAtNormalizedIndex(float normalizedIndex)
     {
-        if (normalizedIndex > 1) normalizedIndex = 1;
-        else if (normalizedIndex < 0) normalizedIndex = 0;
-        return AllMoveables.ElementAt(Mathf.FloorToInt(normalizedIndex * AllMoveables.Count()));
+        if (AllMoveables.Count() == 0) return null;
+        normalizedIndex = Mathf.Clamp01(normalizedIndex);
+        var index = Mathf.FloorToInt(normalizedIndex * AllMoveables.Count());
+        if (index == AllMoveables.Count()) index = AllMoveables.Count() - 1;
+        if (index < 0) index = 0;
+        return AllMoveables.ElementAt(index);
     }
 
     # endregion
+
+    
+    public void AddArtworkControllers()
+    {
+        // this didn't work
+        // Debug.Log("Artwork Controllers " + _artworkControllers.Count);
+        // foreach(IArtworkController controller in _artworkControllers) {
+        //     Debug.Log("Adding controller: " + controller.GetType().ToString());
+        //     artwork.AddController(controller);
+        // }
+
+        // add all the monobehaviours
+        if (gameObject.GetComponent<PolyphonicMidiController>() == null)
+            gameObject.AddComponent<PolyphonicMidiController>();
+
+        if (gameObject.GetComponent<ArtworkColorController>() == null)
+            gameObject.AddComponent<ArtworkColorController>();
+
+        if (gameObject.GetComponent<MotifMotionController>() == null)
+            gameObject.AddComponent<MotifMotionController>();
+
+        if (gameObject.GetComponent<LineTrailController>() == null)
+            gameObject.AddComponent<LineTrailController>();
+        
+        if (gameObject.GetComponent<SpritePhysicsController>() == null)
+            gameObject.AddComponent<SpritePhysicsController>();
+    }
 }
 
 

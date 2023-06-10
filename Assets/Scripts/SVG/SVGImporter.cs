@@ -127,21 +127,21 @@ public class SVGImporter : MonoBehaviour
     /// Adds all monobehaviour artwork controllers to the artwork container,
     /// providing control with OSC endpoints
     /// </summary>
-    private static void AddArtworkControllers(Artwork artwork)
-    {
-        // this didn't work
-        // Debug.Log("Artwork Controllers " + _artworkControllers.Count);
-        // foreach(IArtworkController controller in _artworkControllers) {
-        //     Debug.Log("Adding controller: " + controller.GetType().ToString());
-        //     artwork.AddController(controller);
-        // }
+    // private static void AddArtworkControllers(Artwork artwork)
+    // {
+    //     // this didn't work
+    //     // Debug.Log("Artwork Controllers " + _artworkControllers.Count);
+    //     // foreach(IArtworkController controller in _artworkControllers) {
+    //     //     Debug.Log("Adding controller: " + controller.GetType().ToString());
+    //     //     artwork.AddController(controller);
+    //     // }
 
-        // add all the monobehaviours
-        artwork.gameObject.AddComponent<PolyphonicMidiController>();
-        artwork.gameObject.AddComponent<ArtworkColorController>();
-        artwork.gameObject.AddComponent<MotifMotionController>();
-        artwork.gameObject.AddComponent<LineTrailController>();
-    }
+    //     // add all the monobehaviours
+    //     artwork.gameObject.AddComponent<PolyphonicMidiController>();
+    //     artwork.gameObject.AddComponent<ArtworkColorController>();
+    //     artwork.gameObject.AddComponent<MotifMotionController>();
+    //     artwork.gameObject.AddComponent<LineTrailController>();
+    // }
 
 
     /// <summary>
@@ -156,7 +156,8 @@ public class SVGImporter : MonoBehaviour
         artworkContainer.gameObject.AddComponent<Artwork>();
 
         Artwork artwork = artworkContainer.GetComponent<Artwork>();
-        AddArtworkControllers(artwork);
+        // artwork.AddArtworkControllers();
+        // AddArtworkControllers(artwork);
 
         // fully refresh the contents of the container, 
         // removing any existing layers in the parent if the user re-generates
