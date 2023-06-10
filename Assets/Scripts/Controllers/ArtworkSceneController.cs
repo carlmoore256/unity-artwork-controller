@@ -7,12 +7,17 @@ using System.Linq;
 public class ArtworkSceneController : MonoBehaviour, IOscControllable
 {
     public string OscAddress => "/scene";
+
+    [SerializeField] private int _maxDisabledArtworks = 3;
     private int _currentlySelectedArtworkIndex = 0;
-    public List<Artwork> ActiveArtworks = new List<Artwork>();
+    public Artwork[] ActiveArtworks => gameObject.GetComponentsInChildren<Artwork>();
+
+    //  = new List<Artwork>();
     private GameObject[] _artworkPrefabs;
     private GameObject[] _activeArtworks;
     public string ResourcePath = "Artworks";
     private readonly string _artworkNamePrefix = "Artwork__";
+    
 
     void Start()
     {
@@ -31,10 +36,10 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
     {
         RegisterEndpoints();
 
-        ActiveArtworks = new List<Artwork>();
-        GetComponentsInChildren<Artwork>().ToList().ForEach(x => {
-            ActiveArtworks.Add(x);
-        });
+        // ActiveArtworks = new List<Artwork>();
+        // GetComponentsInChildren<Artwork>().ToList().ForEach(x => {
+        //     ActiveArtworks.Add(x);
+        // });
 
     }
 
@@ -51,10 +56,16 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
     {
         // make these endpoints fill in controller as the gameObject name
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/toggleArtwork", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{OscAddress}/toggleArtworkIdx", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsInt(0);
-            Debug.Log($"Toggled Artwork {value} | number of artworks {ActiveArtworks.Count}");
-            ToggleArtwork(value);
+            Debug.Log($"Toggled Artwork index {value} | number of artworks {ActiveArtworks.Length}");
+            ToggleArtworkByIndex(value);
+        });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/toggleArtwork", (OscDataHandle dataHandle) => {
+            var value = dataHandle.GetElementAsString(0);
+            Debug.Log($"Toggled Artwork {value} | number of artworks {ActiveArtworks.Length}");
+            ToggleArtworkById(value);
         });
 
 
@@ -72,8 +83,21 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
         OscManager.Instance.AddEndpoint($"{OscAddress}/disableArtwork", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsString(0);
             Debug.Log($"Disable Artwork {value}");
-            DisableArtwork(value);
+            DisableArtworkById(value);
         });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/clear", (OscDataHandle dataHandle) => {
+            Debug.Log($"Clearing Scene");
+            ClearScene();
+        });
+    }
+
+    public void ClearScene()
+    {
+        foreach(var artwork in ActiveArtworks)
+        {
+            artwork.RemoveFromScene();
+        }
     }
 
 
@@ -82,16 +106,14 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
         string artworkName = $"{_artworkNamePrefix}{id}";
         Debug.Log($"Attempting to enable Artwork {id}");
 
-        foreach(var i in ActiveArtworks.Select(x => x.Id))
-        {
-            Debug.Log($"Active Artwork {i}");
-        }
 
         // find any existing gameobjects with the same name
         
-        var artwork = ActiveArtworks.Find(x => x.Id == id);
+        // var artwork = ActiveArtworks.Find(x => x.Id == id);
+        var artwork = ActiveArtworks.FirstOrDefault(x => x.gameObject.name == artworkName);
         if (artwork != null) {
             Debug.Log($"Artwork {id} already active");
+            artwork.CancelDestroy();
             return;
         };
         
@@ -103,33 +125,41 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
 
         var newArtwork = Instantiate(artworkPrefab, Vector3.zero, Quaternion.identity);
         newArtwork.transform.parent = transform;
-
         newArtwork.gameObject.name = artworkName;
+        newArtwork.GetComponent<Artwork>().AddArtworkControllers();
 
-        ActiveArtworks.Add(newArtwork.GetComponent<Artwork>());
 
+        // ActiveArtworks.Add(newArtwork.GetComponent<Artwork>());
         Debug.Log($"Enabling Artwork {newArtwork.name}");
-
-        // artwork.gameObject.SetActive(true);
-
-        // var colorController = artwork.gameObject.GetComponent<ArtworkColorController>();
-        // colorController.FadeInEffect(0, 5);
     }
 
-    // private void SpawnArtwork()
 
-
-    private void DisableArtwork(string id)
+    private void DisableArtworkById(string id)
     {
-        var artwork = ActiveArtworks.Find(x => x.Id == id);
+        var artwork = ActiveArtworks.FirstOrDefault(x => x.Id == id);
         if (artwork == null) return;
         Debug.Log($"Disabling Artwork {artwork.gameObject.name}");
         artwork.RemoveFromScene();
     }
 
-    private void ToggleArtwork(int index) {
+    private void ToggleArtworkById(string id)
+    {
+        var artwork = ActiveArtworks.FirstOrDefault(x => x.Id == id);
+        if (artwork == null) {
+            EnableArtworkById(id); // turn the artwork on
+        } else {
+            // if the artwork is pending destruction, turn it back on
+            if (artwork.MarkedToDestroy) { 
+                artwork.CancelDestroy();
+                return;
+            }
+            DisableArtworkById(id);
+        }
+    }
+
+    private void ToggleArtworkByIndex(int index) {
         
-        var artwork = ActiveArtworks.Find(x => x.Index == (int)index);
+        var artwork = ActiveArtworks.FirstOrDefault(x => x.Index == (int)index);
 
         if (artwork == null) {
             Debug.Log($"Artwork {index} not found");
@@ -156,7 +186,7 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
     }
 
     public Vector3 GetArtworkPosition(int index) {
-        var artwork = ActiveArtworks.Find(x => x.Index == (int)index);
+        var artwork = ActiveArtworks.FirstOrDefault(x => x.Index == (int)index);
 
         if (artwork == null) return Vector3.zero;
 

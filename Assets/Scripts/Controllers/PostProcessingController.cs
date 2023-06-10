@@ -58,7 +58,7 @@ public class PostProcessingController : MonoBehaviour, IOscControllable
         OscManager.Instance.AddEndpoint($"{OscAddress}/kaliedoscope/stretch", (OscDataHandle dataHandle) => {
             var kaleidoscope = GetComponent<KaleidoscopeEffect>();
             var value = Mathf.Clamp(dataHandle.GetElementAsFloat(0), -20f, 20f);
-            // kaleidoscope.stretch = value;
+            kaleidoscope.stretch = value;
         });
 
         // rotation would be cool

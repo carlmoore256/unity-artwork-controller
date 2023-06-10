@@ -98,7 +98,6 @@ public class SVGImporter : MonoBehaviour
 
             if (!layer.file.Contains("orig"))
             {
-                layerObject.SetActive(false);
                 layerObject.transform.tag = "backgroundSecondary";
                 layerObject.GetComponent<SpriteRenderer>().maskInteraction = SpriteMaskInteraction.None;
             }
@@ -106,6 +105,9 @@ public class SVGImporter : MonoBehaviour
             {
                 layerObject.transform.tag = "backgroundPrimary";
             }
+            
+            // always set them to inactive
+            layerObject.SetActive(false);
         }
     
         return imageObjects;

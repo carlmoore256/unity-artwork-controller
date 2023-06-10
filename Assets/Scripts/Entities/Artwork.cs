@@ -13,6 +13,7 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
 
     // this is all any controller will ever need to access
     public List<Motif> Motifs = new List<Motif>();
+    public bool MarkedToDestroy = false;
 
 
     private List<Moveable> _allMoveables = new List<Moveable>();
@@ -23,17 +24,21 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
     public IEnumerable<Moveable> AllMoveables => _allMoveables;
     
     // public IEnumerable<Moveable> AllMoveables => Motifs.SelectMany(m => m.Moveables); // call these less as they are more expensive
-    
+
 
     private void Start()
     {
         InitializeMotifs();
+        if (!gameObject.name.Contains("Artwork__")) {
+            gameObject.name = $"Artwork__{gameObject.name}";
+        }
     }
 
 
-    private void OnEnable()
+    private void OnEnable() => FadeIn();
+
+    private void FadeIn()
     {
-        // play the fade-in animation
         var colorController = GetComponent<ArtworkColorController>();
         if (colorController == null) {
             colorController = gameObject.AddComponent<ArtworkColorController>();
@@ -41,17 +46,36 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
         colorController.FadeInEffect();
     }
 
-    public void RemoveFromScene()
+    public void RemoveFromScene(Action onComplete = null)
     {
         // destroys after things have faded out
         var colorController = GetComponent<ArtworkColorController>();
         if (colorController == null) {
             colorController = gameObject.AddComponent<ArtworkColorController>();
         }
+        MarkedToDestroy = true;
         colorController.FadeOutEffect(onComplete: () => {
-            Debug.Log($"Destroying Artwork: {gameObject.name}");
-            Destroy(gameObject);
+            onComplete?.Invoke();
+            FinalizeDestroy();
         });
+    }
+
+    private void FinalizeDestroy()
+    {
+        if (!MarkedToDestroy) {
+            Debug.Log("Artwork not marked to destroy, cancelling");
+            return;
+        };
+        Debug.Log($"Destroying Artwork: {gameObject.name}");
+        Destroy(gameObject);
+    }
+
+    public void CancelDestroy()
+    {
+        if (!MarkedToDestroy) return;
+        MarkedToDestroy = false;
+        Debug.Log($"Cancelling destroy for Artwork: {gameObject.name}");
+        FadeIn();
     }
 
 

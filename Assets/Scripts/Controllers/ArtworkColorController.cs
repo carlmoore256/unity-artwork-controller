@@ -43,8 +43,10 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
         OscManager.Instance.AddEndpoint($"{OscAddress}/rotate", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsFloat(0);
             Debug.Log($"rotate {value}");
-            Artwork.ForeachMotif((motif) => {
-                motif.SetHueOffset(value);
+            // make the index influence more when out of phases
+            var indexInfluence = Mathf.Cos(value * Mathf.PI * 2f) * 0.5f + 0.5f;
+            Artwork.ForeachMotif((motif, normIndex) => {
+                motif.SetHueOffset(value + (normIndex * indexInfluence));
             });
         });
 
