@@ -6,54 +6,35 @@ using OscJack;
 public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkController
 {
     [SerializeField] private int _trailLength = 10;
-    public int TrailLength { get => _trailLength; set => _trailLength = value; }
-
-    public float startWidth = 0.0f;
-    public float endWidth = 0.1f;
-
-    public Material lineMaterial;
+    [SerializeField] private bool _isEnabled = false;
+    [SerializeField] private float _startWidth = 0.0f;
+    [SerializeField] private float _endWidth = 0.1f;
 
     private List<LineTrail> _lineTrails = new List<LineTrail>();
+    private Material _lineMaterial;
 
     public Artwork Artwork => GetComponent<Artwork>();
     public string OscAddress => $"/artwork/{Artwork.Index}/line";
 
-    // private void OnValidate()
-    // {
-    //     // This method will be called whenever 'myValue' is modified in the inspector
-        
-    //     // Add your desired response or logic here
 
-    //     foreach(var lineTrail in _lineTrails)
-    //     {
-    //         lineTrail.SetLineCount(_trailLength);
-    //     }
-    // }
-
-    // Start is called before the first frame update
     void Start()
     {
-        foreach(Transform child in transform)
-        {
-            if (child.gameObject.activeSelf == false) continue;
-            LineTrail lineTrail = null;
-            if (child.GetComponent<LineTrail>() == null)
-            {
-                lineTrail = child.gameObject.AddComponent<LineTrail>();
-            }
-
-            if (lineTrail != null)
-            {
-                lineTrail.Initialize(_trailLength, endWidth, startWidth, lineMaterial);
-                _lineTrails.Add(lineTrail);
-            }
-        }
-
+        _lineMaterial = Resources.Load<Material>("Materials/LineMaterial");
     }
 
     void OnEnable()
     {
         RegisterEndpoints();
+
+        _lineTrails.Clear();
+        Artwork.ForeachMotif((motif) => {
+            var lineTrail = motif.gameObject.GetComponent<LineTrail>();
+            if (lineTrail == null) {
+                motif.gameObject.AddComponent<LineTrail>();
+            }
+            lineTrail.Initialize(_trailLength, _endWidth, _startWidth, _lineMaterial);
+            _lineTrails.Add(lineTrail);
+        });
     }
 
     void OnDisable()
@@ -63,17 +44,30 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
 
     public void RegisterEndpoints() {
         OscManager.Instance.AddEndpoint($"{OscAddress}/toggle", (OscDataHandle dataHandle) => {
-            foreach(var trail in _lineTrails) 
-            {
-                trail.Toggle();
-            }
-            // Artwork.BackgroundFade(fade);
+            _isEnabled = !_isEnabled;
         });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/length", (OscDataHandle dataHandle) => {
+            var length = dataHandle.GetElementAsInt(0);
+            if (length <= 0) {
+                if (_isEnabled) DisableLineTrails();
+                return;
+            } 
+
+            if (!_isEnabled) EnableLineTrails();
+            _lineTrails.ForEach(trail => trail.SetLineCount(length));
+        });
+
+        // add a spider-web effect
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    private void DisableLineTrails() {
+        _lineTrails.ForEach(trail => trail.enabled = false);
+        _isEnabled = false;
+    }
+
+    private void EnableLineTrails() {
+        _lineTrails.ForEach(trail => trail.enabled = true);
+        _isEnabled = true;
     }
 }
