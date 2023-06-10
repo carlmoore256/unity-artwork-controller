@@ -5,35 +5,23 @@ using System.Linq;
 
 public class MaskLayer : MonoBehaviour
 {
-    private SpriteRenderer _backgroundSprite;
-    private List<SpriteRenderer> _imageRenderers = new List<SpriteRenderer>();
+    public float CurrentOpacity { get; private set; }
 
-    // private float _huePhase = 0;
+    private SpriteRenderer _backgroundSprite;
+    private SpriteRenderer[] _spriteRenderers;
     private Color _originalColor;
 
     private void Awake()
     {
 
-        var backgroundSprites = GetComponentsInChildren<SpriteRenderer>();
-        backgroundSprites = backgroundSprites.Where(x => x.gameObject.name.Contains("image-orig")).ToArray();
-        if (backgroundSprites.Length > 0)
-        {
-            _backgroundSprite = backgroundSprites[0];
-        }
+        _spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
 
-        _imageRenderers.Add(_backgroundSprite);
-        _imageRenderers.Add(GetComponent<SpriteRenderer>());
+        _backgroundSprite = _spriteRenderers.FirstOrDefault(x => x.gameObject.name.Contains("image-orig"));
 
         _originalColor = GetColor();
-
-        // _huePhase = Random.Range(0, 1f);
     }
 
-    public void AddRenderer(SpriteRenderer renderer)
-    {
-        _imageRenderers.Add(renderer);
-    }
-
+    /// During the build process of the SVG, this is called to add the background sprite renderer
     public void AddRenderer(GameObject objectRenderer)
     {
         if (objectRenderer.GetComponent<SpriteRenderer>() == null)
@@ -42,13 +30,13 @@ public class MaskLayer : MonoBehaviour
             return;
         }
         objectRenderer.transform.SetParent(transform);
-        AddRenderer(objectRenderer.GetComponent<SpriteRenderer>());
+        // _imageRenderers.Add(objectRenderer.GetComponent<SpriteRenderer>());
     }
 
     public void SetColor(Color color)
     {
         // _backgroundSprite.color = color;
-        foreach(var renderer in _imageRenderers)
+        foreach(var renderer in _spriteRenderers)
         {
             renderer.color = color;
         }
@@ -84,14 +72,15 @@ public class MaskLayer : MonoBehaviour
     }
 
 
-    public void SetOpacity(float alpha)
+    public void SetOpacity(float opacity)
     {
         Color currentColor = _backgroundSprite.color;
-        Color transparentColor = new Color(currentColor.r, currentColor.g, currentColor.b, alpha);
-        foreach(var renderer in _imageRenderers)
+        Color transparentColor = new Color(currentColor.r, currentColor.g, currentColor.b, opacity);
+        foreach(var renderer in _spriteRenderers)
         {
             renderer.color = transparentColor; 
         }
+        CurrentOpacity = opacity;
     }
 
     public Color GetColor()
@@ -107,3 +96,21 @@ public class MaskLayer : MonoBehaviour
     }
 
 }
+
+// Technically good, but not needed
+// float opacity = 0f;
+// foreach (var renderer in _imageRenderers)
+// {
+//     opacity += renderer.color.a;
+// }
+// return opacity / _imageRenderers.Count;
+
+// var backgroundSprites = GetComponentsInChildren<SpriteRenderer>();
+// backgroundSprites = backgroundSprites.Where(x => x.gameObject.name.Contains("image-orig")).ToArray();
+// if (backgroundSprites.Length > 0)
+// {
+//     _backgroundSprite = backgroundSprites[0];
+// }
+
+// _imageRenderers.Add(_backgroundSprite);
+// _imageRenderers.Add(GetComponent<SpriteRenderer>());

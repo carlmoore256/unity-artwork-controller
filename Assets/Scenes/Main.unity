@@ -1198,6 +1198,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7247650546016127696, guid: e530ef3627f73e947a533ae8aa7f96ed, type: 3}
+      propertyPath: m_TagString
+      value: backgroundPrimary
+      objectReference: {fileID: 0}
     - target: {fileID: 8003360900573059720, guid: e530ef3627f73e947a533ae8aa7f96ed, type: 3}
       propertyPath: m_RootOrder
       value: -1

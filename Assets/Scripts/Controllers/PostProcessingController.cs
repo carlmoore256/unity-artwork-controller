@@ -19,6 +19,7 @@ public class PostProcessingController : MonoBehaviour, IOscControllable
 
     void OnDisable()
     {
+        if (OscManager.Instance == null) return;
         OscManager.Instance.RemoveEndpoint(OscAddress + "/kaleidoscope/toggle");
         OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/toggle");
         OscManager.Instance.RemoveEndpoint(OscAddress + "/kaliedoscope/intensity");

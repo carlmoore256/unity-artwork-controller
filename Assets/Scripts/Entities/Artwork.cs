@@ -14,13 +14,34 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
     // this is all any controller will ever need to access
     public List<Motif> Motifs = new List<Motif>();
 
-    public IEnumerable<MaskLayer> AllMaskLayers => Motifs.SelectMany(m => m.MaskLayers); // call these less as they are more expensive
-    public IEnumerable<Moveable> AllMoveables => Motifs.SelectMany(m => m.Moveables); // call these less as they are more expensive
+
+    private List<Moveable> _moveables = new List<Moveable>();
+    private List<MaskLayer> _maskLayers = new List<MaskLayer>();
+
+    public IEnumerable<MaskLayer> AllMaskLayers {
+        get {
+            if (_maskLayers == null) {
+                _maskLayers = Motifs.SelectMany(m => m.MaskLayers).ToList();
+            }
+            return _maskLayers;
+        }
+    } 
+
+    public IEnumerable<Moveable> AllMoveables {
+        get {
+            if (_moveables == null) {
+                _moveables = Motifs.SelectMany(m => m.Moveables).ToList();
+            }
+            return _moveables;
+        }
+    }
+    
+    // public IEnumerable<Moveable> AllMoveables => Motifs.SelectMany(m => m.Moveables); // call these less as they are more expensive
     
 
-    public void AddController(IArtworkController controller)
+    void Start()
     {
-        gameObject.AddComponent(controller.GetType());
+        InitializeMotifs();
     }
 
     /// <summary>
@@ -30,8 +51,17 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
     {
         foreach(Transform child in transform)
         {
+            if (child.gameObject.CompareTag("backgroundPrimary") || child.gameObject.CompareTag("backgroundSecondary")) {
+                Debug.Log("Skipping background", child.gameObject);
+                continue;
+            };
+
+            if (child.gameObject.GetComponentsInChildren<MaskLayer>().Length == 0) {
+                Debug.Log("Skipping non-mask layer", child.gameObject);
+                continue;
+            }
             var motif = child.GetComponent<Motif>();
-            if (motif == null) motif = gameObject.AddComponent<Motif>();
+            if (motif == null) motif = child.gameObject.AddComponent<Motif>();
             Motifs.Add(motif);
         }
     }

@@ -28,7 +28,7 @@ public class TransformSnapshot {
         return new TransformSnapshot(newPosition, newRotation, newScale);
     }
 
-    public static TransformSnapshot Lerp(TransformSnapshot a, TransformSnapshot b, float t) {
+    public static TransformSnapshot NewFromLerp(TransformSnapshot a, TransformSnapshot b, float t) {
         Vector3 newPosition = Vector3.Lerp(a.Position, b.Position, t);
         Quaternion newRotation = Quaternion.Slerp(a.Rotation, b.Rotation, t);
         Vector3 newScale = Vector3.Lerp(a.Scale, b.Scale, t);

@@ -29,6 +29,7 @@ public class LogoController : MonoBehaviour, IOscControllable
 
     void OnDisable()
     {
+        if (OscManager.Instance == null) return;
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLogo");
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/disableLogo");
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleLogo");

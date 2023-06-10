@@ -18,7 +18,12 @@ public class Moveable : MonoBehaviour
 
     public TransformSnapshot DefaultSnapshot;
     private TransformSnapshot _referenceSnapshot;
+    // public TransformSnapshot TargetSnapshot => new TransformSnapshot(_targetPosition, _targetRotation, _targetScale);
     public TransformSnapshot TargetSnapshot;
+
+    private Vector3 _targetPosition;
+    private Vector3 _targetScale;
+    private Quaternion _targetRotation;
 
     // private TransformSnapshot _targetSnapshot;
 
@@ -60,6 +65,10 @@ public class Moveable : MonoBehaviour
         if (duration == -1) duration = DefaultDuration;
         TargetSnapshot = snapshot;
 
+        // _targetPosition = snapshot.Position;
+        // _targetRotation = snapshot.Rotation;
+        // _targetScale = snapshot.Scale;
+
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
@@ -69,6 +78,8 @@ public class Moveable : MonoBehaviour
     {
         if (duration == -1) duration = DefaultDuration;
         TargetSnapshot.Position = position;
+
+        // _targetPosition = position;
 
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
@@ -80,6 +91,8 @@ public class Moveable : MonoBehaviour
         if (duration == -1) duration = DefaultDuration;
         TargetSnapshot.Rotation = rotation;
 
+        // _targetRotation = rotation;
+
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
@@ -88,8 +101,9 @@ public class Moveable : MonoBehaviour
     public void ScaleTo(Vector3 scale, float duration=-1, Action onComplete=null)
     {
         if (duration == -1) duration = DefaultDuration;
-        // CoroutineManager.ScaleTo(scale, duration);
         TargetSnapshot.Scale = scale;
+
+        // _targetScale = scale;
 
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
@@ -102,6 +116,8 @@ public class Moveable : MonoBehaviour
         Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
         TargetSnapshot.Rotation = targetRotation;
 
+        // _targetRotation = targetRotation;
+
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
@@ -110,8 +126,13 @@ public class Moveable : MonoBehaviour
     public void ResetToDefault(float duration=-1, Action onComplete=null)
     {
         if (duration == -1) duration = DefaultDuration;
-        // CoroutineManager.TransformTo(_defaultSnapshot, duration);
         TargetSnapshot = DefaultSnapshot.Copy();
+
+        // var defaultSnapshot = DefaultSnapshot.Copy();
+        // _targetPosition = defaultSnapshot.Position;
+        // _targetRotation = defaultSnapshot.Rotation;
+        // _targetScale = defaultSnapshot.Scale;
+
 
         if (onComplete != null) {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
@@ -141,10 +162,22 @@ public class Moveable : MonoBehaviour
         // now we have to lerp between _referenceSnapshot and _targetSnapshot
         if (_lerp > 0f) 
         {
-            var lerp = TransformSnapshot.Lerp(TargetSnapshot, _referenceSnapshot, _lerp);
+            var lerp = TransformSnapshot.NewFromLerp(TargetSnapshot, _referenceSnapshot, _lerp);
             CoroutineManager.TransformTo(lerp, MoveDuration);
+            // var posLerp = Vector3.Lerp(_referenceSnapshot.Position, _targetPosition, _lerp);
+            // var rotLerp = Quaternion.Lerp(_referenceSnapshot.Rotation, _targetRotation, _lerp);
+            // var scaleLerp = Vector3.Lerp(_referenceSnapshot.Scale, _targetScale, _lerp);
+            
+            // CoroutineManager.MoveTo(posLerp, MoveDuration);
+            // CoroutineManager.RotateTo(rotLerp, MoveDuration);
+            // CoroutineManager.ScaleTo(scaleLerp, MoveDuration);
+
         } else {
             CoroutineManager.TransformTo(TargetSnapshot, MoveDuration);
+
+            // CoroutineManager.MoveTo(_targetPosition, MoveDuration);
+            // CoroutineManager.RotateTo(_targetRotation, MoveDuration);
+            // CoroutineManager.ScaleTo(_targetScale, MoveDuration);
         }
 
         if (LookAtTarget != null && EnableLookAtTarget)

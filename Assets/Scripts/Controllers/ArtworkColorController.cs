@@ -63,51 +63,47 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
 {
     public Artwork Artwork => GetComponent<Artwork>();
     public string OscAddress => $"/artwork/{Artwork.Index}/color";
-    private Moveable _moveable;
 
     // group these if they are in a motif group
-    private List<LayerColor> _groupedLayers = new List<LayerColor>();
-    private Coroutine _fadeCoroutine;
+    // private List<LayerColor> _groupedLayers = new List<LayerColor>();
 
     void Start()
     {
-        _moveable = GetComponent<Moveable>();
 
-
-        var allMaskLayers = GetComponentsInChildren<MaskLayer>();
+        // var allMaskLayers = GetComponentsInChildren<MaskLayer>();
 
         // for each mask layer, if their parent has the tag motifGroup and the parent is the same, 
         // assign them to a group
 
-        Dictionary<string, List<MaskLayer>> motifGroups = new Dictionary<string, List<MaskLayer>>();
+        // Dictionary<string, List<MaskLayer>> motifGroups = new Dictionary<string, List<MaskLayer>>();
 
-        foreach(var layer in allMaskLayers)
-        {
-            if (layer.transform.parent != null && layer.transform.parent.tag == "motifGroup")
-            {
-                if (!motifGroups.ContainsKey(layer.transform.parent.name))
-                {
-                    motifGroups.Add(layer.transform.parent.name, new List<MaskLayer>());
-                }
-                motifGroups[layer.transform.parent.name].Add(layer);
-            } else {
-                _groupedLayers.Add(new LayerColor(layer));
-            }
-        }
+        // foreach(var layer in allMaskLayers)
+        // {
+        //     if (layer.transform.parent != null && layer.transform.parent.tag == "motifGroup")
+        //     {
+        //         if (!motifGroups.ContainsKey(layer.transform.parent.name))
+        //         {
+        //             motifGroups.Add(layer.transform.parent.name, new List<MaskLayer>());
+        //         }
+        //         motifGroups[layer.transform.parent.name].Add(layer);
+        //     } else {
+        //         _groupedLayers.Add(new LayerColor(layer));
+        //     }
+        // }
 
-        foreach(var group in motifGroups)
-        {
-            var layerColors = new LayerColor(group.Value.ToArray());
-            _groupedLayers.Add(layerColors);
-        }
+        // foreach(var group in motifGroups)
+        // {
+        //     var layerColors = new LayerColor(group.Value.ToArray());
+        //     _groupedLayers.Add(layerColors);
+        // }
 
 
-        // initialize to black
-        foreach(var layer in _groupedLayers)
-        {
-            layer.SetColor(Color.white);
-            // layer.SetAlpha(0f);
-        }
+        // // initialize to black
+        // foreach(var layer in _groupedLayers)
+        // {
+        //     layer.SetColor(Color.white);
+        //     // layer.SetAlpha(0f);
+        // }
     }
 
     void OnEnable()
@@ -128,11 +124,10 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/opacity", (OscDataHandle dataHandle) => {
             var fade = dataHandle.GetElementAsFloat(0);
-            // Artwork.BackgroundFade(fade);
-            foreach(var layer in _groupedLayers)
-            {
-                layer.SetAlpha(fade);
-            }
+
+            Artwork.ForeachMotif((motif) => {
+                motif.SetOpacity(fade);
+            });
         });
 
         
@@ -141,13 +136,10 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
 
             var value = dataHandle.GetElementAsFloat(0);
             Debug.Log($"rotate {value}");
-            foreach(var layer in _groupedLayers)
-            {
-                foreach(var mask in layer.Masks)
-                {
-                    mask.SetHueOffset(value);
-                }
-            }
+
+            Artwork.ForeachMotif((motif) => {
+                motif.SetHueOffset(value);
+            });
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/fadeIn", (OscDataHandle dataHandle) => {
@@ -167,42 +159,42 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
 
     public void FadeOutEffect(float waitTimeLow = 0f, float waitTimeHigh = 5f, float fadeTimeLow = 0.5f, float fadeTimeHigh = 2f)
     {
-        foreach (var layer in _groupedLayers)
+        foreach(var motif in Artwork.Motifs)
         {
-            var randomWaitTime = Random.Range(waitTimeLow, waitTimeHigh);
-            var randomFadeTime = Random.Range(fadeTimeLow, fadeTimeHigh);
-            StartCoroutine(WaitAndFade(layer, randomWaitTime, randomFadeTime, 0f));
+            var delay = Random.Range(waitTimeLow, waitTimeHigh);
+            var duration = Random.Range(fadeTimeLow, fadeTimeHigh);
+            motif.FadeOut(delay, duration);
         }
     }
 
     public void FadeInEffect(float waitTimeLow = 0f, float waitTimeHigh = 5f, float fadeTimeLow = 0.5f, float fadeTimeHigh = 2f)
     {
-        foreach (var layer in _groupedLayers)
+        foreach(var motif in Artwork.Motifs)
         {
-            var randomWaitTime = Random.Range(waitTimeLow, waitTimeHigh);
-            var randomFadeTime = Random.Range(fadeTimeLow, fadeTimeHigh);
-            StartCoroutine(WaitAndFade(layer, randomWaitTime, randomFadeTime, 1f));
+            var delay = Random.Range(waitTimeLow, waitTimeHigh);
+            var duration = Random.Range(fadeTimeLow, fadeTimeHigh);
+            motif.FadeIn(delay, duration);
         }
     }
 
-    private IEnumerator WaitAndFade(LayerColor layerColor, float delay, float fadeTime, float fadeTo)
-    {
-        yield return new WaitForSeconds(delay);
+    // private IEnumerator WaitAndFade(LayerColor layerColor, float delay, float fadeTime, float fadeTo)
+    // {
+    //     yield return new WaitForSeconds(delay);
         
-        float startTime = Time.time;
-        float endTime = startTime + fadeTime;
-        float startFade = layerColor.Opacity;
-        float endFade = fadeTo;
+    //     float startTime = Time.time;
+    //     float endTime = startTime + fadeTime;
+    //     float startFade = layerColor.Opacity;
+    //     float endFade = fadeTo;
 
-        while(Time.time < endTime)
-        {
-            float t = (Time.time - startTime) / fadeTime;
-            float fade = Mathf.Lerp(startFade, endFade, t);
-            layerColor.SetAlpha(fade);
-            yield return null;
-        }
+    //     while(Time.time < endTime)
+    //     {
+    //         float t = (Time.time - startTime) / fadeTime;
+    //         float fade = Mathf.Lerp(startFade, endFade, t);
+    //         layerColor.SetAlpha(fade);
+    //         yield return null;
+    //     }
 
-    }
+    // }
 }
 
 
