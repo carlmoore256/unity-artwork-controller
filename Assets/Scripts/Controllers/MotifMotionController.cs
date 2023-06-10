@@ -4,6 +4,10 @@ using UnityEngine;
 using OscJack;
 using System.Linq;
 
+
+// consider adding a MotionPlugin or IMotionPlugin, or even IEffectPlugin, that has 
+// access to an artwork, and does things to it. Its behavior can be tied to one of these controllers
+
 public class MotifMotionController : MonoBehaviour, IOscControllable
 {
     public int _artworkId = 0;
@@ -14,33 +18,45 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
     // private List<Moveable> _moveables = new List<Moveable>();
     private Dictionary<Moveable, TransformSnapshot> _targetSnapshots = new Dictionary<Moveable, TransformSnapshot>();
 
+
+    [Header("Sinusoidal Motion")]
     [SerializeField] public float _moveXAmount = 0.1f;
     [SerializeField] public float _moveYAmount = 0.1f;
     [SerializeField] public float _moveZAmount = 0.1f;
 
     [SerializeField] private float _speed = 1f;
-    [SerializeField] private bool _enableMotion = true;
+    [SerializeField] private bool _enableSinusoidalMotion = true;
+    private float _phase = 0f;
+    
+    [Header("Random Motion")]
+    [SerializeField] private float _randProb = 0.1f;
+    [SerializeField] private float _randDist = 0.0f;
+    [SerializeField] private bool _enableRandomMotion = true;
 
+    [Header("Look At")]
+    [SerializeField] private float _lookAtAmount = 0.0f;
+    [SerializeField] private bool _enableLookAtTarget = false;
 
-    Transform LookAtTarget;
+    
 
+    private readonly float _minControlValue = 0.01f; 
+
+    private Transform _lookAtTarget;
 
 
     void Start()
     {
-        LookAtTarget = GameObject.Find("Main Camera").transform;
+        // _lookAtTarget = GameObject.Find("Main Camera").transform;
+        _lookAtTarget = Camera.main.transform;
 
         Artwork.ForeachMoveable((moveable) => {
             _targetSnapshots.Add(moveable, moveable.CurrentSnapshot);
         });
 
-        // _moveables.AddRange(FindObjectsOfType<Moveable>());
-        // _moveables.AddRange(Artwork.AllMoveables);
-        // foreach(var moveable in Artwork.AllMoveables)
-        // {
-        //     _targetSnapshots.Add(moveable, moveable.CurrentSnapshot);           
-        // }
-
+        if (_randDist == 0.0f)
+        {
+            _enableRandomMotion = false;
+        }
     }
 
     void OnEnable()
@@ -61,6 +77,10 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/reset");
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpCenter");
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpReset");
+
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/randProbab");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/randDist");
+
         // OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpTarget");
         // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableMotion");
         // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtTarget");
@@ -68,20 +88,21 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
         
     }
 
-    // idea : add a camera controller
-
     public void RegisterEndpoints()
     {
         OscManager.Instance.AddEndpoint($"{OscAddress}/sinX", (OscDataHandle dataHandle) => {
             _moveXAmount = dataHandle.GetElementAsFloat(0);
+            CheckSinusoidalMotionStatus();
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/cosY", (OscDataHandle dataHandle) => {
             _moveYAmount = dataHandle.GetElementAsFloat(0);
+            CheckSinusoidalMotionStatus();
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/sinZ", (OscDataHandle dataHandle) => {
             _moveZAmount = dataHandle.GetElementAsFloat(0);
+            CheckSinusoidalMotionStatus();
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/speed", (OscDataHandle dataHandle) => {
@@ -92,36 +113,35 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
             _speed = dataHandle.GetElementAsFloat(0);
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/lookAtCamera", (OscDataHandle dataHandle) => {
-            Artwork.ForeachMoveable((moveable) => {
-                moveable.LookAtTarget = LookAtTarget;
-                moveable.EnableLookAtTarget = !moveable.EnableLookAtTarget;
-            });
-            // foreach(var m in _moveables)
-            // {
-            //     m.LookAtTarget = Camera.main.transform;
-            //     m.EnableLookAtTarget = !m.EnableLookAtTarget;
-            // }
+        OscManager.Instance.AddEndpoint($"{OscAddress}/randProb", (OscDataHandle dataHandle) => {
+            _randProb = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f);
+            if (_randProb < _minControlValue) _enableRandomMotion = false;
+            else _enableRandomMotion = true;
         });
 
+        OscManager.Instance.AddEndpoint($"{OscAddress}/randDist", (OscDataHandle dataHandle) => {
+            _randDist = dataHandle.GetElementAsFloat(0);
+            if (_randDist < _minControlValue) _enableRandomMotion = false;
+            else _enableRandomMotion = true;
+        });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/lookAt", (OscDataHandle dataHandle) => {
+            _lookAtAmount = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f);
+            if (_lookAtAmount < _minControlValue) _enableLookAtTarget = false;
+            else _enableLookAtTarget = true;
+        });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/reset", (OscDataHandle dataHandle) => {
             Artwork.ForeachMoveable((moveable) => {
                 moveable.ResetToDefault();
             });
-
-            // foreach(var moveable in _moveables)
-            // {
-            //     moveable.ResetToDefault();
-            // }
         });
 
         OscManager.Instance.AddEndpoint($"{OscAddress}/lerpCenter", (OscDataHandle dataHandle) => {
             var allMoveables = Artwork.AllMoveables;
             var center = allMoveables.Select(m => m.CurrentSnapshot.Position).Aggregate((a, b) => a + b);
             center /= allMoveables.Count();
-            float value = dataHandle.GetElementAsFloat(0);
-
+            float value = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f);
             foreach(var moveable in allMoveables)
             {
                 var newPos = Vector3.Lerp(moveable.CurrentSnapshot.Position, center, value);
@@ -136,10 +156,17 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
         });
     }
 
-    float _phase = 0f;
+    private void CheckSinusoidalMotionStatus()
+    {
+        if (_moveXAmount > _minControlValue || _moveYAmount > _minControlValue || _moveZAmount > _minControlValue) {
+            _enableSinusoidalMotion = true;
+        } else {
+            _enableSinusoidalMotion = false;
+        }
+    }
 
 
-    void OscillatingMovement()
+    void SinusoidalMotion()
     {
         _phase += Time.deltaTime * _speed;
         if (_phase > 1)
@@ -148,22 +175,40 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
         }
 
         Artwork.ForeachMoveable((moveable, normIndex) => {
-            var currentPos = moveable.transform.position;
-            currentPos.x += Mathf.Sin((_phase + normIndex) * 2 * Mathf.PI) * _moveXAmount;
-            currentPos.y += Mathf.Cos((_phase + normIndex) * 2 * Mathf.PI) * _moveYAmount;
-            currentPos.z += Mathf.Sin((_phase + normIndex) * 2 * Mathf.PI) * _moveZAmount;
-            _targetSnapshots[moveable].Position = currentPos;
+            var updatePos = _targetSnapshots[moveable].Position;
+            updatePos.x += Mathf.Sin((_phase + normIndex) * 2 * Mathf.PI) * _moveXAmount;
+            updatePos.y += Mathf.Cos((_phase + normIndex) * 2 * Mathf.PI) * _moveYAmount;
+            updatePos.z += Mathf.Sin((_phase + normIndex) * 2 * Mathf.PI) * _moveZAmount;
+            _targetSnapshots[moveable].Position = updatePos;
         });
     }
 
-    void RandomMovement()
+    void RandomMotion()
     {
+        // var numToMove = Artwork.AllMoveables.Count() * _randProbability;
         Artwork.ForeachMoveable((moveable, normIndex) => {
-            var currentPos = moveable.transform.position;
-            currentPos.x += Random.Range(-1f, 1f) * _moveXAmount;
-            currentPos.y += Random.Range(-1f, 1f) * _moveYAmount;
-            currentPos.z += Random.Range(-1f, 1f) * _moveZAmount;
-            _targetSnapshots[moveable].Position = currentPos;
+            if (Random.Range(0f, 1f) > _randProb)
+                return;
+            var updatePos = _targetSnapshots[moveable].Position;
+            // var moveScalar = Random.Range(_randRangeLo, _randRangeHi);
+            updatePos.x += Random.Range(-1f, 1f) * _randDist;
+            updatePos.y += Random.Range(-1f, 1f) * _randDist;
+            updatePos.z += Random.Range(-1f, 1f) * _randDist;
+            _targetSnapshots[moveable].Position = updatePos;
+        });
+    }
+
+    void LookAtMotion()
+    {
+        // update each moveable to look at _lookAtTarget
+        Artwork.ForeachMoveable((moveable, normIndex) => {
+            var updateRot = _targetSnapshots[moveable].Rotation;
+            var lookAtTarget = _lookAtTarget.position;
+            var lookAtPos = moveable.CurrentSnapshot.Position;
+            var lookAtDir = lookAtTarget - lookAtPos;
+            var lookAtRot = Quaternion.LookRotation(lookAtDir);
+            updateRot = Quaternion.Lerp(updateRot, lookAtRot, _lookAtAmount);
+            _targetSnapshots[moveable].Rotation = updateRot;
         });
     }
 
@@ -180,49 +225,10 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
     
     void Update()
     {
-        if (!_enableMotion) return;
         UpdateTargetSnapshots();
-        OscillatingMovement();
+        if (_enableSinusoidalMotion) SinusoidalMotion();
+        if (_enableRandomMotion) RandomMotion();   
+        if (_enableLookAtTarget) LookAtMotion();     
         ApplyTargetSnapshots();
     }
 }
-
-
-    // Artwork.ForeachMotif((motif, normIndex) => {
-    //     // Moveable moveable = motif.Moveable;
-    //     // // TransformSnapshot snapshot = moveable.CurrentSnapshot;
-    //     // // TransformSnapshot snapshot = _targetSnapshots[moveable];
-    //     // Vector3 newPos = _targetSnapshots[moveable].Position;
-
-    //     var currentPos = motif.GetPosition();
-
-
-    //     Debug.Log("NORM INDEX " + normIndex);
-
-    //     // currentPos.x += Random.RandomRange(-0.1f, 0.1f) * moveXAmount;
-    //     currentPos.x += Mathf.Sin((_phase + normIndex) * 2 * Mathf.PI) * _moveXAmount;
-    //     currentPos.y += Mathf.Cos((_phase + normIndex) * 2 * Mathf.PI) * _moveYAmount;
-    //     currentPos.z += Mathf.Sin((_phase + normIndex) * 2 * Mathf.PI) * _moveZAmount;
-
-    //     motif.ForeachMoveable((moveable) => {
-    //         moveable.MoveTo(currentPos, 0.6f);
-    //     });
-    // });
-
-    // for(int i = 0; i < _moveables.Count; i++)
-    // {
-    //     float fracIndex = (float)i / (float)_moveables.Count;
-    //     Moveable moveable = _moveables[i];
-    //     // TransformSnapshot snapshot = moveable.CurrentSnapshot;
-    //     // TransformSnapshot snapshot = _targetSnapshots[moveable];
-    //     Vector3 newPos = _targetSnapshots[moveable].Position;
-
-    //     // currentPos.x += Random.RandomRange(-0.1f, 0.1f) * moveXAmount;
-    //     newPos.x += Mathf.Sin((_phase + fracIndex) * 2 * Mathf.PI) * _moveXAmount;
-    //     newPos.y += Mathf.Cos((_phase + fracIndex) * 2 * Mathf.PI) * _moveYAmount;
-    //     newPos.z += Mathf.Sin((_phase + fracIndex) * 2 * Mathf.PI) * _moveZAmount;
-
-    //     // moveable.MoveTo(newPos, 0.6f);
-    //     _targetSnapshots[moveable].Position = newPos;
-    //     // _targetSnapshots[moveable] = snapshot;
-    // }

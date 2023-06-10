@@ -18,14 +18,7 @@ public class Moveable : MonoBehaviour
 
     public TransformSnapshot DefaultSnapshot;
     private TransformSnapshot _referenceSnapshot;
-    // public TransformSnapshot TargetSnapshot => new TransformSnapshot(_targetPosition, _targetRotation, _targetScale);
     public TransformSnapshot TargetSnapshot;
-
-    private Vector3 _targetPosition;
-    private Vector3 _targetScale;
-    private Quaternion _targetRotation;
-
-    // private TransformSnapshot _targetSnapshot;
 
     public float MoveDuration = 0.5f;
     public float DefaultDuration = 0.6f;
@@ -34,9 +27,13 @@ public class Moveable : MonoBehaviour
 
     public UnityAction OnTransformStart; 
     public UnityAction OnTransformEnd;
+    private float _lerp = 0f;
 
-    public bool EnableLookAtTarget { get; set; }
-    public Transform LookAtTarget;
+    // private Vector3 _targetPosition;
+    // private Vector3 _targetScale;
+    // private Quaternion _targetRotation;
+    // public TransformSnapshot TargetSnapshot => new TransformSnapshot(_targetPosition, _targetRotation, _targetScale);
+
 
     void Start()
     {
@@ -139,8 +136,6 @@ public class Moveable : MonoBehaviour
         }
     }
 
-    // private Action<TransformSnapshot, TransformSnapshot, float> _lerpFunction;
-    private float _lerp = 0f;
 
     public void LerpToDefault(float t)
     {
@@ -167,23 +162,15 @@ public class Moveable : MonoBehaviour
             // var posLerp = Vector3.Lerp(_referenceSnapshot.Position, _targetPosition, _lerp);
             // var rotLerp = Quaternion.Lerp(_referenceSnapshot.Rotation, _targetRotation, _lerp);
             // var scaleLerp = Vector3.Lerp(_referenceSnapshot.Scale, _targetScale, _lerp);
-            
             // CoroutineManager.MoveTo(posLerp, MoveDuration);
             // CoroutineManager.RotateTo(rotLerp, MoveDuration);
             // CoroutineManager.ScaleTo(scaleLerp, MoveDuration);
 
         } else {
             CoroutineManager.TransformTo(TargetSnapshot, MoveDuration);
-
             // CoroutineManager.MoveTo(_targetPosition, MoveDuration);
             // CoroutineManager.RotateTo(_targetRotation, MoveDuration);
             // CoroutineManager.ScaleTo(_targetScale, MoveDuration);
-        }
-
-        if (LookAtTarget != null && EnableLookAtTarget)
-        {
-            // Debug.Log("looking at target " + LookAtTarget.position);
-            LookAt(LookAtTarget.position);
         }
     }
 

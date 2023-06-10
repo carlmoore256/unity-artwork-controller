@@ -70,11 +70,17 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
     public void SetOpacity(float opacity, bool useCurve = true)
     {
         if (useCurve) opacity = Mathf.Pow(opacity, _responseCurve);
-
         foreach (var mask in MaskLayers)
         {
             mask.SetOpacity(opacity);
         }
+    }
+
+    public void SetOpacityDelayed(float opacity, float delay, bool useCurve = true)
+    {
+        if (useCurve) opacity = Mathf.Pow(opacity, _responseCurve);
+        if (_opacityCoroutine != null) StopCoroutine(_opacityCoroutine);
+        _opacityCoroutine = StartCoroutine(OpacityCoroutine(opacity, 0.5f, delay));
     }
 
 
