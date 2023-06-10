@@ -49,6 +49,13 @@ public class Dispatcher : MonoBehaviour
         }
     }
 
+    public static void Reset()
+    {
+        _queued = false;
+        _backlog.Clear();
+        _actions.Clear();
+    }
+
     static Dispatcher _instance;
     static volatile bool _queued = false;
     static List<Action> _backlog = new List<Action>(8);

@@ -13,7 +13,7 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
     public int _artworkId = 0;
     public int ArtworkId => _artworkId;
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Index}/motion";
+    public string OscAddress => $"/artwork/{Artwork.Id}/motion";
 
     // private List<Moveable> _moveables = new List<Moveable>();
     private Dictionary<Moveable, TransformSnapshot> _targetSnapshots = new Dictionary<Moveable, TransformSnapshot>();
@@ -66,26 +66,12 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
 
     void OnDisable()
     {
-        if (OscManager.Instance == null)
-            return;
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/sinX");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/cosY");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/sinZ");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/speed");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/range");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lookAtCamera");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/reset");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpCenter");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpReset");
+        UnregisterEndpoints();
+    }
 
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/randProbab");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/randDist");
-
-        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpTarget");
-        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableMotion");
-        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtTarget");
-        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtCamera");
-        
+    void OnDestroy()
+    {
+        UnregisterEndpoints();
     }
 
     public void RegisterEndpoints()
@@ -154,6 +140,28 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
                 moveable.LerpToDefault(dataHandle.GetElementAsFloat(0));
             });
         });
+    }
+
+    public void UnregisterEndpoints()
+    {
+        if (OscManager.Instance == null) return;
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/sinX");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/cosY");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/sinZ");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/speed");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/range");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lookAtCamera");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/reset");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpCenter");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpReset");
+
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/randProbab");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/randDist");
+
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpTarget");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableMotion");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtTarget");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtCamera");
     }
 
     private void CheckSinusoidalMotionStatus()

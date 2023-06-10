@@ -4,6 +4,7 @@ public interface IOscControllable
 {
     string OscAddress { get; }
     void RegisterEndpoints();
+    void UnregisterEndpoints();
 }
 
 public interface IArtworkController

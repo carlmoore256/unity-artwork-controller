@@ -6,7 +6,7 @@ using UnityEngine;
 public class Logo : MonoBehaviour
 {
 
-    public string Id => gameObject.name.Split("__")[1];
+    public string Id => gameObject.name.Split("Logo__")[1];
     private SpriteRenderer _spriteRenderer;
     private CoroutineManager _coroutineManager;
 
@@ -18,6 +18,7 @@ public class Logo : MonoBehaviour
     {
         // _moveable = GetComponent<Moveable>();
         _coroutineManager = new CoroutineManager(this);
+        gameObject.name = gameObject.name.Replace("(Clone)", "");
         Debug.Log($"Logo {Id} enabled");
         _spriteRenderer = GetComponent<SpriteRenderer>();
         

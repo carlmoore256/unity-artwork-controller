@@ -40,6 +40,10 @@ public class SVGImporter : MonoBehaviour
 
         // create the layers that form the whole piece
         CreateLayers(artworkContainer, layersPath, svgLayers, imageBackgrounds);
+
+        // set the background layer to inactive (REMOVE ME)
+        var imageOrig = artworkContainer.Find("image-orig");
+        if (imageOrig != null) imageOrig.gameObject.SetActive(false);
     }
 
     private void CreateLayers(Transform artworkContainer, string layersPath, List<SVGLayer> svgLayers, List<GameObject> imageBackgrounds)
@@ -98,6 +102,7 @@ public class SVGImporter : MonoBehaviour
 
             if (!layer.file.Contains("orig"))
             {
+                layerObject.SetActive(false);
                 layerObject.transform.tag = "backgroundSecondary";
                 layerObject.GetComponent<SpriteRenderer>().maskInteraction = SpriteMaskInteraction.None;
             }
@@ -105,9 +110,6 @@ public class SVGImporter : MonoBehaviour
             {
                 layerObject.transform.tag = "backgroundPrimary";
             }
-            
-            // always set them to inactive
-            layerObject.SetActive(false);
         }
     
         return imageObjects;
@@ -158,7 +160,7 @@ public class SVGImporter : MonoBehaviour
         artworkContainer.gameObject.AddComponent<Artwork>();
 
         Artwork artwork = artworkContainer.GetComponent<Artwork>();
-        // artwork.AddArtworkControllers();
+        artwork.AddArtworkControllers();
         // AddArtworkControllers(artwork);
 
         // fully refresh the contents of the container, 

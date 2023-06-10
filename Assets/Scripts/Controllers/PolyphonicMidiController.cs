@@ -11,7 +11,7 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
     private Dictionary<int, Action<int, float>> _noteOnActions = new Dictionary<int, Action<int, float>>();
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Index}/midi";
+    public string OscAddress => $"/artwork/{Artwork.Id}/midi";
 
     [SerializeField] private float _scaleAmount = 5f;
     [SerializeField] private float _sizeAttackTime = 0.1f;
@@ -33,6 +33,16 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
         RegisterEndpoints();
     }
 
+    void OnDisable()
+    {
+        UnregisterEndpoints();
+    }
+
+    void OnDestroy()
+    {
+        UnregisterEndpoints();
+    }
+
 
     public void RegisterEndpoints()
     {
@@ -46,6 +56,12 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
 
             NoteIn(note, velocity, channel);
         });
+    }
+
+    public void UnregisterEndpoints()
+    {
+        if (OscManager.Instance == null) return;
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/note");
     }
 
     void NoteIn(int note, float velocity, int channel)

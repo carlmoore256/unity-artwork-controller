@@ -46,6 +46,14 @@ public class OscManager : MonoBehaviour
     //     _server = new OscServer(Port);
     // }
 
+
+    public void ResetEndpoints()
+    {
+        _endpoints = new List<OscEndpoint>();
+    }
+
+
+
     public OscEndpoint AddEndpoint(string address)
     {
         var newEndpoint = new OscEndpoint(address, Server);
@@ -63,12 +71,24 @@ public class OscManager : MonoBehaviour
 
     public void RemoveEndpoint(string address)
     {
+        address = $"{RootAddress}{address}";
         var endpoint = _endpoints.FirstOrDefault(x => x.Address == address);
+        Debug.Log("Endpoint: " + endpoint);
         if (endpoint != null)
         {
             endpoint.Deactivate();
             _endpoints.Remove(endpoint);
+        } else {
+            Debug.LogWarning($"No endpoint found at address {address}");
         }
+    }
+
+    // option to add an endpoint that is unaffected by the subscriber system
+    public void AddStaticEndpoint(string address, Action<OscDataHandle> listener)
+    {
+        Server.MessageDispatcher.AddCallback($"{RootAddress}{address}", (string msgAddress, OscDataHandle data) => {
+            listener?.Invoke(data);
+        });
     }
 
 
@@ -83,4 +103,13 @@ public class OscManager : MonoBehaviour
     }
 
     private void DisposeServer() { _server?.Dispose(); }
+
+
+    // void Update()
+    // {
+    //     foreach(var endpoint in _endpoints)
+    //     {
+    //         Debug.Log($"Endpoint: {endpoint}");
+    //     }
+    // }
 }

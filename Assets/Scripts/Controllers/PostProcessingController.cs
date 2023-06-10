@@ -13,20 +13,21 @@ public class PostProcessingController : MonoBehaviour, IOscControllable
     {
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
         RegisterEndpoints();
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
-        if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint(OscAddress + "/kaleidoscope/toggle");
-        OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/toggle");
-        OscManager.Instance.RemoveEndpoint(OscAddress + "/kaliedoscope/intensity");
-        OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/intensity");
-        OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/feedback");
+        UnregisterEndpoints();
     }
+
+    private void OnDestroy()
+    {
+        UnregisterEndpoints();
+    }
+    
 
     public void RegisterEndpoints()
     {
@@ -84,6 +85,16 @@ public class PostProcessingController : MonoBehaviour, IOscControllable
         // OscManager.Instance.AddEndpoint($"{OscAddress}/fadeIn", (OscDataHandle dataHandle) => {
         //     FadeInEffect();
         // });
+    }
+
+    public void UnregisterEndpoints()
+    {
+        if (OscManager.Instance == null) return;
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/kaleidoscope/toggle");
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/toggle");
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/kaliedoscope/intensity");
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/intensity");
+        OscManager.Instance.RemoveEndpoint(OscAddress + "/echo/feedback");
     }
 
     private void SetIntensity(ICameraEffect effect, float value)

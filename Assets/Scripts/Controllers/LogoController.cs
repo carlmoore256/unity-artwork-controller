@@ -8,31 +8,47 @@ public class LogoController : MonoBehaviour, IOscControllable
 {
     public string OscAddress => "/logo";
 
-    private Logo[] _logos;
+    public Logo[] Logos => GetComponentsInChildren<Logo>(true);
+
+    private GameObject[] _logoPrefabs;
 
  
     void Start()
     {
-        _logos = GetComponentsInChildren<Logo>();
-        foreach(var logo in _logos)
-        {
-            Debug.Log(logo.Id);
-            // logo.gameObject.SetActive(false);
-        }
+        // _logos = GetComponentsInChildren<Logo>();
+        // foreach(var logo in _logos)
+        // {
+        //     Debug.Log(logo.Id);
+        //     // logo.gameObject.SetActive(false);
+        // }
+
     }
 
     void OnEnable()
     {
+        _logoPrefabs = Resources.LoadAll<GameObject>("Logos");
+        if (_logoPrefabs.Length == 0) {
+            throw new System.Exception($"No Logo Prefabs found in Resources/Logos");
+        }
+
+        foreach(var logoPrefab in _logoPrefabs)
+        {
+            CreateNewLogo(logoPrefab);
+        }
+
+
         RegisterEndpoints();
     }
 
 
     void OnDisable()
     {
-        if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLogo");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/disableLogo");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleLogo");
+        UnregisterEndpoints();
+    }
+
+    void OnDestroy()
+    {
+        UnregisterEndpoints();
     }
 
     public void RegisterEndpoints()
@@ -56,21 +72,58 @@ public class LogoController : MonoBehaviour, IOscControllable
         });
     }
 
+    public void UnregisterEndpoints()
+    {
+        if (OscManager.Instance == null) return;
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLogo");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/disableLogo");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleLogo");
+    }
+
     private void EnableLogo(string id)
     {
-        var logo = _logos.FirstOrDefault(l => l.Id.ToLower() == id.ToLower());
+        var logo = Logos.FirstOrDefault(l => l.Id.ToLower() == id.ToLower());
         logo.gameObject.SetActive(true);
     }
 
     private void DisableLogo(string id)
     {
-        var logo = _logos.FirstOrDefault(l => l.Id.ToLower() == id.ToLower());
+        var logo = Logos.FirstOrDefault(l => l.Id.ToLower() == id.ToLower());
         logo.FadeOut();
+    }
+
+    private GameObject FindLogoObject(string id)
+    {
+        GameObject logo = null;
+        foreach(var l in Logos)
+        {
+            var nameParts = l.name.Split("Logo__");
+            if (nameParts.Length < 2) continue;
+            var name = nameParts[1].ToLower();
+            if (name == id.ToLower())
+            {
+                logo = l.gameObject;
+                break;
+            }
+        }
+        return logo;
+    }
+
+    private void CreateNewLogo(GameObject logoPrefab)
+    {
+        GameObject newLogo = Instantiate(logoPrefab, transform);
+        var currentName = newLogo.name;
+        newLogo.SetActive(false);
     }
 
     private void ToggleLogo(string id)
     {
-        var logo = _logos.FirstOrDefault(l => l.Id.ToLower() == id.ToLower());
+        Debug.Log("ALl logos" + Logos.Length);
+        var logo = Logos.FirstOrDefault(l => l.Id.ToLower() == id.ToLower());
+        if (logo == null)
+        {
+            return;
+        }
         if (logo.gameObject.activeSelf)
         {
             logo.FadeOut();

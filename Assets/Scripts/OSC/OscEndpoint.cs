@@ -8,7 +8,7 @@ using System;
 public class OscEndpoint
 {
     private readonly string _address;
-    public string Address { get; }
+    public string Address => _address;
     private List<Action<OscDataHandle>> _listeners = new List<Action<OscDataHandle>>();    
     private readonly OscServer _server;
 
@@ -44,5 +44,10 @@ public class OscEndpoint
                 listener?.Invoke(data);
             });
         }
+    }
+
+    public override string ToString()
+    {
+        return "[OscEndpoint at " + _address + " with " + _listeners.Count + " listeners]";
     }
 }

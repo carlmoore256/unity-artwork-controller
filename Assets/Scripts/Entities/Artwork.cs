@@ -25,6 +25,10 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
     
     // public IEnumerable<Moveable> AllMoveables => Motifs.SelectMany(m => m.Moveables); // call these less as they are more expensive
 
+    void Awake()
+    {
+        gameObject.name = gameObject.name.Replace("(Clone)", "");
+    }
 
     private void Start()
     {
@@ -35,7 +39,11 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
     }
 
 
-    private void OnEnable() => FadeIn();
+    private void OnEnable() {
+        Debug.Log($"Artwork {gameObject.name} enabled");
+        // ForeachMotif(m => m.SetOpacity(0f));
+        // FadeIn();
+    }
 
     private void FadeIn()
     {

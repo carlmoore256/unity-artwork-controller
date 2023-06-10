@@ -25,11 +25,6 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
         if (_artworkPrefabs.Length == 0) {
             throw new System.Exception($"No Artwork Prefabs found in Resources/{ResourcePath}");
         }
-
-        foreach(var prefab in _artworkPrefabs)
-        {
-            Debug.Log("PREFAB " + prefab.name + " Id: " + prefab.GetComponent<Artwork>().Id);
-        }
     }
 
     void OnEnable()
@@ -44,6 +39,11 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
     }
 
     void OnDisable()
+    {
+        UnregisterEndpoints();
+    }
+
+    public void UnregisterEndpoints()
     {
         if (OscManager.Instance == null) return;
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleArtwork");
@@ -125,8 +125,12 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
 
         var newArtwork = Instantiate(artworkPrefab, Vector3.zero, Quaternion.identity);
         newArtwork.transform.parent = transform;
-        newArtwork.gameObject.name = artworkName;
+        // newArtwork.gameObject.name = artworkName;
         newArtwork.GetComponent<Artwork>().AddArtworkControllers();
+
+        // newArtwork.GetComponent<Artwork>().ForeachMotif((motif) => {
+        //     motif.GetComponent<MotifColorController>().SetRandomColor();
+        // });
 
 
         // ActiveArtworks.Add(newArtwork.GetComponent<Artwork>());

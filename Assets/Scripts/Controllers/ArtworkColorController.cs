@@ -6,7 +6,7 @@ using System;
 public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkController
 {
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Index}/color";
+    public string OscAddress => $"/artwork/{Artwork.Id}/color";
 
     void OnEnable()
     {
@@ -14,6 +14,15 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
     }
 
     void OnDisable()
+    {
+        UnregisterEndpoints();
+    }
+    
+    void OnDestroy() {
+        UnregisterEndpoints();
+    }
+    
+    public void UnregisterEndpoints()
     {
         if (OscManager.Instance == null) return;
         OscManager.Instance.RemoveEndpoint($"{OscAddress}/opacity");
@@ -44,7 +53,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
             var value = dataHandle.GetElementAsFloat(0);
             Debug.Log($"rotate {value}");
             // make the index influence more when out of phases
-            var indexInfluence = Mathf.Cos(value * Mathf.PI * 2f) * 0.5f + 0.5f;
+            var indexInfluence = ((Mathf.Cos(value * Mathf.PI * 2f) * 0.5f + 0.5f) * -1) + 1f;
             Artwork.ForeachMotif((motif, normIndex) => {
                 motif.SetHueOffset(value + (normIndex * indexInfluence));
             });

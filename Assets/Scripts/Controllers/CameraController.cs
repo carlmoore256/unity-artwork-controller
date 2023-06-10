@@ -230,6 +230,11 @@ public class CameraController : MonoBehaviour, IOscControllable
         // });
     }
 
+    public void UnregisterEndpoints()
+    {
+        
+    }
+
     private void ResetCamera(InputAction.CallbackContext ctx)
     {
         // StartCoroutine(ResetCameraDelay());

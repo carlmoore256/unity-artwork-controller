@@ -14,7 +14,7 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
     private Material _lineMaterial;
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Index}/line";
+    public string OscAddress => $"/artwork/{Artwork.Id}/line";
 
 
     void Start()
@@ -39,7 +39,7 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
 
     void OnDisable()
     {
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggle");
+        UnregisterEndpoints();
     }
 
     public void RegisterEndpoints() {
@@ -59,6 +59,13 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
         });
 
         // add a spider-web effect
+    }
+
+    public void UnregisterEndpoints()
+    {
+        if (OscManager.Instance == null) return;
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggle");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/length");
     }
 
     private void DisableLineTrails() {

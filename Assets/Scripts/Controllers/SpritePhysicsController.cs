@@ -12,23 +12,26 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
     public bool GravityEnabled = false;
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Index}/physics";
+    public string OscAddress => $"/artwork/{Artwork.Id}/physics";
 
 
     [SerializeField] private bool _physicsEnabled = false;
     [SerializeField] private bool _gravityEnabled = false;
 
 
-    void OnEnable()
+    private void OnEnable()
     {
         RegisterEndpoints();
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/togglePhysics");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleGravity");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/explode");
+        UnregisterEndpoints();
+    }
+
+    private void OnDestroy()
+    {
+        UnregisterEndpoints();
     }
 
     public void RegisterEndpoints()
@@ -56,6 +59,14 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
                 sprite.AddForce(direction * dataHandle.GetElementAsFloat(0));
             }
         });
+    }
+
+    public void UnregisterEndpoints()
+    {
+        if (OscManager.Instance == null) return;
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/togglePhysics");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleGravity");
+        OscManager.Instance.RemoveEndpoint($"{OscAddress}/explode");
     }
 
     private void DisableSpritePhysicsComponents()

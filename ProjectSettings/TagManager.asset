@@ -16,6 +16,7 @@ TagManager:
   - backgroundPrimary
   - backgroundSecondary
   - motifGroup
+  - note
   layers:
   - Default
   - TransparentFX
