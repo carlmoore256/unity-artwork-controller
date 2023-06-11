@@ -10,19 +10,27 @@ public class Logo : MonoBehaviour
     private SpriteRenderer _spriteRenderer;
     private CoroutineManager _coroutineManager;
 
-    // Moveable _moveable;
+    Moveable _moveable;
 
     TransformSnapshot _defaultSnapshot;
 
+    public float RotationSpeed = 10.0f;
+    public float Scale = 1.0f;
+
+    private float _rotation = 0f;
+
+    private Coroutine _scaleCoroutine;
+    private Coroutine _rotationCoroutine;
+
     void OnEnable()
     {
-        // _moveable = GetComponent<Moveable>();
+        _moveable = GetComponent<Moveable>();
         _coroutineManager = new CoroutineManager(this);
         gameObject.name = gameObject.name.Replace("(Clone)", "");
         Debug.Log($"Logo {Id} enabled");
         _spriteRenderer = GetComponent<SpriteRenderer>();
         
-        // _defaultSnapshot = _moveable.CurrentSnapshot;
+        _defaultSnapshot = _moveable.DefaultSnapshot;
         SetOpacity(0f);
 
       
@@ -31,6 +39,9 @@ public class Logo : MonoBehaviour
         }, 1f, null, () => {
             Debug.Log("Logo faded in");
         });
+
+        _defaultSnapshot.Scale = transform.localScale;
+        _defaultSnapshot.Rotation = transform.rotation;
     }
 
     public void FadeOut()
@@ -43,11 +54,50 @@ public class Logo : MonoBehaviour
         });
     }
 
-    // Start is called before the first frame update
-    void Start()
+    public void Reset()
     {
+        // transform.rotation = Quaternion.identity;
+        if (_scaleCoroutine != null) StopCoroutine(_scaleCoroutine);
+        if (_rotationCoroutine != null) StopCoroutine(_rotationCoroutine);
+
+
+        _scaleCoroutine = StartCoroutine(ScaleCoroutine(1f, _defaultSnapshot.Scale));
+        _rotationCoroutine = StartCoroutine(RotateCoroutine(1f, _defaultSnapshot.Rotation));
+        // transform.localScale = Vector3.one;
     }
 
+    public void ScaleTo(float scale)
+    {
+        if (_scaleCoroutine != null) StopCoroutine(_scaleCoroutine);
+        _scaleCoroutine = StartCoroutine(ScaleCoroutine(1f, _defaultSnapshot.Scale * scale));
+    }
+
+
+    IEnumerator ScaleCoroutine(float duration, Vector3 targetScale)
+    {
+        float time = 0;
+        Vector3 startScale = transform.localScale;
+        while (time < duration)
+        {
+            transform.localScale = Vector3.Lerp(startScale, targetScale, time / duration);
+            time += Time.deltaTime;
+            yield return null;
+        }
+        transform.localScale = targetScale;
+    }
+
+    IEnumerator RotateCoroutine(float duration, Quaternion targetRotation)
+    {
+        float time = 0;
+        Quaternion startRotation = transform.rotation;
+        while (time < duration)
+        {
+            transform.rotation = Quaternion.Lerp(startRotation, targetRotation, time / duration);
+            time += Time.deltaTime;
+            yield return null;
+        }
+        transform.rotation = targetRotation;
+    }
 
     void SetOpacity(float value)
     {
@@ -63,13 +113,9 @@ public class Logo : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // var rot = transform.rotation.eulerAngles.z + 0.1f * 10f * Time.deltaTime;
-        // _moveable.RotateTo(Quaternion.Euler(0, 0, rot));
+        if (RotationSpeed > 0) {
+            transform.Rotate(Vector3.up, RotationSpeed * Time.deltaTime);
 
-        // _moveable.ScaleTo(_defaultSnapshot.Scale * 1.1f);
-        // _defaultSnapshot.Scale *= 1.1f;
-
-        // ROTATE AROUND 
-        transform.rotation = Quaternion.Euler(0,  transform.rotation.eulerAngles.z + 0.1f * 10f * Time.deltaTime,  0);
+        }
     }
 }

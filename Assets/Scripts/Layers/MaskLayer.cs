@@ -13,12 +13,19 @@ public class MaskLayer : MonoBehaviour
 
     private void Awake()
     {
+        // CurrentOpacity = 0f;
+
+
+        // SetOpacity(0f);
 
         _spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
 
+        
         _backgroundSprite = _spriteRenderers.FirstOrDefault(x => x.gameObject.name.Contains("image-orig"));
 
         _originalColor = GetColor();
+
+        CurrentOpacity = _originalColor.a; 
     }
 
     /// During the build process of the SVG, this is called to add the background sprite renderer

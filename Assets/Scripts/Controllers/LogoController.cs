@@ -12,6 +12,8 @@ public class LogoController : MonoBehaviour, IOscControllable
 
     private GameObject[] _logoPrefabs;
 
+    private Logo _activeLogo;
+
  
     void Start()
     {
@@ -70,6 +72,31 @@ public class LogoController : MonoBehaviour, IOscControllable
             Debug.Log($"Toggle Logo {value}");
             ToggleLogo(value);
         });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/rotateSpeed", (OscDataHandle dataHandle) => {
+            var value = dataHandle.GetElementAsFloat(0);
+            Debug.Log($"Rotate Speed {value}");
+            if (_activeLogo != null) {
+                _activeLogo.RotationSpeed = value;
+            }
+        });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/scale", (OscDataHandle dataHandle) => {
+            var value = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0.1f, 3f);
+            Debug.Log($"Scale {value}");
+            if (_activeLogo != null) {
+                // _activeLogo.Scale = value;
+                _activeLogo.ScaleTo(value);
+            }
+        });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/reset", (OscDataHandle dataHandle) => {
+            var value = dataHandle.GetElementAsFloat(0);
+            Debug.Log($"Reset {value}");
+            if (_activeLogo != null) {
+                _activeLogo.Reset();
+            }
+        });
     }
 
     public void UnregisterEndpoints()
@@ -127,10 +154,12 @@ public class LogoController : MonoBehaviour, IOscControllable
         if (logo.gameObject.activeSelf)
         {
             logo.FadeOut();
+            _activeLogo = null;
         }
         else
         {
             logo.gameObject.SetActive(true);
+            _activeLogo = logo;
         }
     }
 }

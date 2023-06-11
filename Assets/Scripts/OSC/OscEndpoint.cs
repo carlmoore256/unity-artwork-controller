@@ -22,7 +22,9 @@ public class OscEndpoint
 
     public void Deactivate()
     {
-        _server.MessageDispatcher.RemoveCallback(_address, NotifyListeners);
+        if (_server != null && _server.MessageDispatcher != null) {
+            _server.MessageDispatcher.RemoveCallback(_address, NotifyListeners);
+        }
     }
 
     public void AddListener(Action<OscDataHandle> listener)

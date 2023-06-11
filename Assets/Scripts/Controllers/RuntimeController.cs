@@ -29,10 +29,10 @@ public class RuntimeController : MonoBehaviour, IOscControllable
 
     public void RegisterEndpoints()
     {
-        OscManager.Instance.AddEndpoint($"{OscAddress}/quit", (OscDataHandle dataHandle) => {
-            Debug.Log("Quitting");
-            // Application.Quit();
-        });
+        // OscManager.Instance.AddEndpoint($"{OscAddress}/quit", (OscDataHandle dataHandle) => {
+        //     Debug.Log("Quitting");
+        //     // Application.Quit();
+        // });
 
         OscManager.Instance.AddStaticEndpoint($"{OscAddress}/reload", (OscDataHandle dataHandle) => {
             _reset = true;

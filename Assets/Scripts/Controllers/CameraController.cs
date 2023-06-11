@@ -26,6 +26,10 @@ public class CameraController : MonoBehaviour, IOscControllable
 
     private float _orbitDistance = 10f;
 
+    private bool _isMoving = false;
+
+    [SerializeField] private float _cameraResetDuration = 3f;
+
 
     private TransformSnapshot _originalPosition;
 
@@ -53,10 +57,24 @@ public class CameraController : MonoBehaviour, IOscControllable
         _orbitTarget = _sceneController.transform;
     }
 
+    private Coroutine _resetCameraCoroutine;
+    public void RegisterEndpoints()
+    {
+        OscManager.Instance.AddEndpoint("/camera/reset", (OscDataHandle oscDataHandle) => {
+            Debug.Log("Resetting camera");
+            if (_resetCameraCoroutine != null)
+            {
+                StopCoroutine(_resetCameraCoroutine);
+            }
+            _resetCameraCoroutine = StartCoroutine(LerpCameraToDefault());
+        });
+    }
+
     private void OnDisable()
     {   
+        if (OscManager.Instance != null)
         // OscManager.Instance.RemoveEndpoint
-
+            OscManager.Instance.RemoveEndpoint("/camera/reset");
 
         _playerInputActions.Camera.Disable();
         _playerInputActions.Camera.Translate.performed -= OnTranslate;
@@ -69,13 +87,6 @@ public class CameraController : MonoBehaviour, IOscControllable
 
     private void OnTranslate(InputAction.CallbackContext ctx) {
         _translateInput = ctx.ReadValue<Vector2>() * _moveSpeed;
-        // var currentPos = _moveable.TargetSnapshot.Position;
-        // currentPos.x += ctx.ReadValue<Vector2>().x * _moveSpeed;
-        // currentPos.z += ctx.ReadValue<Vector2>().y * _moveSpeed;
-        // Debug.Log("Move performed : " + ctx.ReadValue<Vector2>());
-        // _moveable.MoveTo(currentPos, _moveSpeed);
-        // _rigidbody.MovePosition(currentPos);
-        // _rigidbody.AddForce(currentPos);
     }
 
     private void OnMoveUp(InputAction.CallbackContext ctx) {
@@ -88,7 +99,6 @@ public class CameraController : MonoBehaviour, IOscControllable
     private void OnMoveDown(InputAction.CallbackContext ctx) {
         var currentPos = _moveable.TargetSnapshot.Position;
         currentPos.y -= ctx.ReadValue<float>() * _moveSpeed;
-        // _moveable.MoveTo(currentPos, _moveSpeed);
         _rigidbody.MovePosition(currentPos);
     }
 
@@ -130,25 +140,14 @@ public class CameraController : MonoBehaviour, IOscControllable
         // move to position
         _moveable.MoveTo(targetPosition, _lerpSpeed);
 
-
-        // Vector3 direction = (transform.position - _orbitTarget.position).normalized;
-        // Vector3 targetPosition = _orbitTarget.position + direction * distance;
-
-
     }
 
     private void MoveCamera()
-    {
-        // var currentPos = _moveable.TargetSnapshot.Position;
-        // currentPos.x += _translateInput.x;
-        // currentPos.z += _translateInput.y;
-        // _moveable.MoveTo(currentPos, _moveSpeed);
-
-        // add a force towards the front of where the camera is looking
+    { 
+       // add a force towards the front of where the camera is looking
         var force = transform.forward * _translateInput.y * _moveSpeed;
         force += transform.right * _translateInput.x * _moveSpeed;
         _rigidbody.AddForce(force, ForceMode.Impulse);
-
 
         Quaternion targetRotation = Quaternion.Euler(_rotateInput.y, 0, _rotateInput.x) * transform.rotation;
 
@@ -158,19 +157,14 @@ public class CameraController : MonoBehaviour, IOscControllable
         Quaternion rotation = Quaternion.Euler(-_rotateInput.y * _rotateSpeed, _rotateInput.x * _rotateSpeed, 0f);
 
         transform.rotation *= rotation; 
-        // transform.rotation = transform.
-        // _moveable.RotateTo(rotation, _lerpSpeed);    
-
-
-        // Apply the rotation to the rigidbody
-        // _rigidbody.MoveRotation(smoothRotation);
-        // _rigidbody.AddTorque(transform.up * _rotateInput.x * _rotateSpeed, ForceMode.Impulse);
-        // _rigidbody.AddTorque(smoothRotation.eulerAngles * _rotateSpeed, ForceMode.VelocityChange);
-        // _rigidbody.AddTorque(rotation.eulerAngles, ForceMode.VelocityChange);
     }
 
     private void FixedUpdate()
     {
+        if (_isMoving)
+        {
+            return;
+        }
 
         if (_orbitCameraEnabled)
         {
@@ -180,55 +174,8 @@ public class CameraController : MonoBehaviour, IOscControllable
         {
             MoveCamera();
         }
-
-
-        // rotate the camera by applying torque
-        // _rigidbody.AddTorque(transform.up * _rotateInput.x * _moveSpeed, ForceMode.VelocityChange);
-        // 
-
-        // Quaternion targetRotation = Quaternion.Euler(_rotateInput.y, 0, _rotateInput.x) * transform.rotation;
-        // Perform a smooth transition between current and target rotation
-        // Quaternion smoothRotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * _rotateSpeed);
-
-        // var currentRot = transform.rotation;
-        // Vector3 euler = currentRot.eulerAngles;
-        // euler.x += _rotateInput.y * _moveSpeed * -1;
-        // euler.y += _rotateInput.x * _moveSpeed;
-        // _moveable.RotateTo(Quaternion.Euler(euler.x, euler.y, euler.z), _moveSpeed);
     }
 
-    public void RegisterEndpoints()
-    {
-        // OscManager.Instance.AddEndpoint($"{OscAddress}/moveX", (OscDataHandle dataHandle) => {
-        //     var currentPos = _moveable.TargetSnapshot.Position;
-        //     currentPos.x = dataHandle.GetElementAsFloat(0);
-        //     _moveable.MoveTo(currentPos, _moveSpeed);
-        // });
-
-        // OscManager.Instance.AddEndpoint($"{OscAddress}/moveY", (OscDataHandle dataHandle) => {
-        //     var currentPos = _moveable.TargetSnapshot.Position;
-        //     currentPos.y = dataHandle.GetElementAsFloat(0);
-        //     _moveable.MoveTo(currentPos, _moveSpeed);
-        // });
-
-        // OscManager.Instance.AddEndpoint($"{OscAddress}/moveZ", (OscDataHandle dataHandle) => {
-        //     Debug.Log("Move Z called! Amount: " + dataHandle.GetElementAsFloat(0));
-        //     var currentPos = _moveable.TargetSnapshot.Position;
-        //     currentPos.z = dataHandle.GetElementAsFloat(0);
-        //     _moveable.MoveTo(currentPos, _moveSpeed);
-        // });
-
-        // OscManager.Instance.AddEndpoint($"{OscAddress}/rotateX", (OscDataHandle dataHandle) => {
-        //     var currentRot = transform.rotation;
-        //     Vector3 euler = currentRot.eulerAngles;
-        //     euler.x += dataHandle.GetElementAsFloat(0);
-        //     _moveable.RotateTo(Quaternion.Euler(euler.x, euler.y, euler.z), _moveSpeed);
-        // });
-
-        // OscManager.Instance.AddEndpoint($"{OscAddress}/speed", (OscDataHandle dataHandle) => {
-        //     _moveSpeed = dataHandle.GetElementAsFloat(0);
-        // });
-    }
 
     public void UnregisterEndpoints()
     {
@@ -237,10 +184,38 @@ public class CameraController : MonoBehaviour, IOscControllable
 
     private void ResetCamera(InputAction.CallbackContext ctx)
     {
-        // StartCoroutine(ResetCameraDelay());
-        _rigidbody.velocity = Vector3.zero;
+        // transform.position = _originalPosition.Position;
+        // transform.rotation = _originalPosition.Rotation;
+        if (_resetCameraCoroutine != null) {
+            StopCoroutine(_resetCameraCoroutine);
+        }
+        _resetCameraCoroutine = StartCoroutine(LerpCameraToDefault());
+    }
+
+    private IEnumerator LerpCameraToDefault()
+    {
+        _rigidbody.isKinematic = true;
+        _isMoving = true;
+        // _moveable.TransformTo(_originalPosition);
+        float t = 0;
+        // lerp camera to _original position
+        float duration = _cameraResetDuration;
+        float time = 0f;
+        while (time < duration) {
+            transform.position = Vector3.Lerp(transform.position, _originalPosition.Position, time/duration);
+            transform.rotation = Quaternion.Lerp(transform.rotation, _originalPosition.Rotation, time/duration);
+            time += Time.deltaTime;
+            yield return null;
+        }
+
         transform.position = _originalPosition.Position;
         transform.rotation = _originalPosition.Rotation;
+
+        _rigidbody.isKinematic = false;
+        _isMoving = false;
+        _rigidbody.velocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero; // Add this line
+        _rigidbody.Sleep(); // Add this line
     }
 
 

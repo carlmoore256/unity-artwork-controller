@@ -24,6 +24,8 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
     [SerializeField] public float _moveYAmount = 0.1f;
     [SerializeField] public float _moveZAmount = 0.1f;
 
+    [SerializeField] private float _randomMotionInitRange = 0.1f;
+
     [SerializeField] private float _speed = 1f;
     [SerializeField] private bool _enableSinusoidalMotion = true;
     private float _phase = 0f;
@@ -62,6 +64,11 @@ public class MotifMotionController : MonoBehaviour, IOscControllable
     void OnEnable()
     {
         RegisterEndpoints();
+
+
+        _moveXAmount = Random.Range(0f, _randomMotionInitRange);
+        _moveYAmount = Random.Range(0f, _randomMotionInitRange);
+        _moveZAmount = Random.Range(0f, _randomMotionInitRange);
     }
 
     void OnDisable()

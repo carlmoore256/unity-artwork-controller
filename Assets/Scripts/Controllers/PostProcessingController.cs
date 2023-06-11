@@ -1,11 +1,14 @@
 using UnityEngine;
 using OscJack;
+using UnityEngine.Rendering.PostProcessing;
 
 public class PostProcessingController : MonoBehaviour, IOscControllable
 {
     public string OscAddress => "/camera";
 
     private float _minMIDIValue = 0.01f;
+
+    [SerializeField] private PostProcessProfile _postProcessProfile;
 
 
 
@@ -79,6 +82,41 @@ public class PostProcessingController : MonoBehaviour, IOscControllable
             var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
             echo.echoIntensity = value;
         });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/bloom/intensity", (OscDataHandle dataHandle) => {
+            var bloom = _postProcessProfile.GetSetting<Bloom>();
+            var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
+            if (value < _minMIDIValue) {
+                bloom.active = false;
+            } else {
+                bloom.active = true;
+            }
+            bloom.intensity.value = value;
+        });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/bloom/threshold", (OscDataHandle dataHandle) => {
+            var bloom = _postProcessProfile.GetSetting<Bloom>();
+            var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
+            bloom.threshold.value = value;
+        });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/bloom/softKnee", (OscDataHandle dataHandle) => {
+            var bloom = _postProcessProfile.GetSetting<Bloom>();
+            var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
+            bloom.softKnee.value = value;
+        });
+
+        OscManager.Instance.AddEndpoint($"{OscAddress}/abberation/intensity", (OscDataHandle dataHandle) => {
+            var abberation = _postProcessProfile.GetSetting<ChromaticAberration>();
+            var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
+            if (value < _minMIDIValue) {
+                abberation.active = false;
+            } else {
+                abberation.active = true;
+            }
+            abberation.intensity.value = value;
+        });
+
 
         /// GOOD IDEA - make a fade to black screen so that if everything goes wrong, we can easily fade to black,
         //// then reset scene 

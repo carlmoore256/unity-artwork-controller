@@ -126,7 +126,7 @@ public class ArtworkSceneController : MonoBehaviour, IOscControllable
         var newArtwork = Instantiate(artworkPrefab, Vector3.zero, Quaternion.identity);
         newArtwork.transform.parent = transform;
         // newArtwork.gameObject.name = artworkName;
-        newArtwork.GetComponent<Artwork>().AddArtworkControllers();
+        // newArtwork.GetComponent<Artwork>().AddArtworkControllers();
 
         // newArtwork.GetComponent<Artwork>().ForeachMotif((motif) => {
         //     motif.GetComponent<MotifColorController>().SetRandomColor();

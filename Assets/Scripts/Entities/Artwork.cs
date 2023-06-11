@@ -41,8 +41,8 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
 
     private void OnEnable() {
         Debug.Log($"Artwork {gameObject.name} enabled");
-        // ForeachMotif(m => m.SetOpacity(0f));
-        // FadeIn();
+        AddArtworkControllers();
+        FadeIn();
     }
 
     private void FadeIn()
@@ -107,8 +107,11 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
             if (motif == null) motif = child.gameObject.AddComponent<Motif>();
             if (!child.gameObject.activeSelf) continue;
             Motifs.Add(motif);
-        }
 
+            // motif.ForeachMaskLayer(ml => {
+            //     ml.SetOpacity(0f);
+            // });
+        }
         _allMoveables = Motifs.SelectMany(m => m.Moveables).ToList();
         _allMaskLayers = Motifs.SelectMany(m => m.MaskLayers).ToList();
     }
@@ -304,23 +307,3 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
             gameObject.AddComponent<SpritePhysicsController>();
     }
 }
-
-
-
-
-
-
-// public GameObject GetObjectAtNormalizedIndex(float normalizedIndex)
-// {
-//     normalizedIndex *= transform.childCount;
-//     var index = Mathf.FloorToInt(normalizedIndex);
-//     var child = transform.GetChild(index);
-//     return child.gameObject;
-// }
-
-// public Motif GetMotifAtNormalizedIndex(float normalizedIndex)
-// {
-//     normalizedIndex *= Motifs.Count;
-//     var index = Mathf.FloorToInt(normalizedIndex);
-//     return Motifs[index];
-// }

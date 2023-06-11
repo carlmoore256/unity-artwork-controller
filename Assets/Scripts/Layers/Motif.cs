@@ -36,6 +36,8 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
     {
         MaskLayers = GetComponentsInChildren<MaskLayer>();
         Moveables = GetComponentsInChildren<Moveable>();
+
+        // SetOpacity(0f, false);
     }
 
     /// <summary>
@@ -146,8 +148,8 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
         float startOpacity = GetOpacity(); // get the average opacity
         while (time < duration)
         {
-            SetOpacity(Mathf.Lerp(startOpacity, targetOpacity, time / duration)); // set the average opacity
             time += Time.deltaTime;
+            SetOpacity(Mathf.Lerp(startOpacity, targetOpacity, time / duration)); // set the average opacity
             yield return null;
         }
         SetOpacity(targetOpacity);

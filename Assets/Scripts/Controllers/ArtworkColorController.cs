@@ -21,7 +21,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
     void OnDestroy() {
         UnregisterEndpoints();
     }
-    
+
     public void UnregisterEndpoints()
     {
         if (OscManager.Instance == null) return;
@@ -86,11 +86,16 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
 
     public void FadeInEffect(float waitTimeLow = 0f, float waitTimeHigh = 5f, float fadeTimeLow = 0.5f, float fadeTimeHigh = 2f)
     {
-        foreach(var motif in Artwork.Motifs)
-        {
+        // foreach(var motif in Artwork.Motifs)
+        // {
+        //     var delay = UnityEngine.Random.Range(waitTimeLow, waitTimeHigh);
+        //     var duration = UnityEngine.Random.Range(fadeTimeLow, fadeTimeHigh);
+        //     motif.FadeIn(delay, duration);
+        // }
+        Artwork.ForeachMotif((motif, normIndex) => {
             var delay = UnityEngine.Random.Range(waitTimeLow, waitTimeHigh);
             var duration = UnityEngine.Random.Range(fadeTimeLow, fadeTimeHigh);
             motif.FadeIn(delay, duration);
-        }
+        });
     }
 }

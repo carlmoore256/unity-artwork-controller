@@ -19,6 +19,12 @@ public class BlockThrower : MonoBehaviour
 
     public List<Texture2D> Textures;
 
+    public float throwRadius = 0.5f;
+
+    public float blockLifetime = 10f;
+
+    public float blockSizeRange = 0.5f;
+
     void Start()
     {
         
@@ -27,7 +33,11 @@ public class BlockThrower : MonoBehaviour
 
     void ThrowBlock()
     {
-        var block = Instantiate(BlockPrefab, transform.position, Quaternion.identity);
+        var randomPos = Random.insideUnitCircle * throwRadius;
+
+        var block = Instantiate(BlockPrefab, randomPos, Quaternion.identity);
+
+        block.transform.localScale *= Random.Range(1f - blockSizeRange, 1f + blockSizeRange);
         // block.GetComponent<SpriteRenderer>().material = BlockMaterial;
 
         var forward = transform.forward;
@@ -47,12 +57,16 @@ public class BlockThrower : MonoBehaviour
 
         var texture = Textures[Random.Range(0, Textures.Count)];
         block.GetComponent<Renderer>().material.mainTexture = texture;
-
         // make the size random
-        
-
-
         _blocks.Add(blockRigidbody);
+
+        StartCoroutine(DestroyBlock(blockRigidbody, blockLifetime));
+    }
+
+    private IEnumerator DestroyBlock(Rigidbody block, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Destroy(block.gameObject);
     }
 
     void Update()
