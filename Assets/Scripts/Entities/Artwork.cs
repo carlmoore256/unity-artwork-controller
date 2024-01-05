@@ -32,27 +32,42 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
 
     private void Start()
     {
-        InitializeMotifs();
-        if (!gameObject.name.Contains("Artwork__")) {
-            gameObject.name = $"Artwork__{gameObject.name}";
-        }
+        // InitializeMotifs();
+        // if (!gameObject.name.Contains("Artwork__")) {
+        //     gameObject.name = $"Artwork__{gameObject.name}";
+        // }
     }
 
 
     private void OnEnable() {
         Debug.Log($"Artwork {gameObject.name} enabled");
+        InitializeMotifs();
         AddArtworkControllers();
-        FadeIn();
-    }
-
-    private void FadeIn()
-    {
-        var colorController = GetComponent<ArtworkColorController>();
-        if (colorController == null) {
-            colorController = gameObject.AddComponent<ArtworkColorController>();
+        if (!gameObject.name.Contains("Artwork__")) {
+            gameObject.name = $"Artwork__{gameObject.name}";
         }
+        var colorController = GetComponent<ArtworkColorController>();
+        colorController.ResetToTransparent();
         colorController.FadeInEffect();
     }
+
+    // public void FadeIn()
+    // {
+    //     var colorController = GetComponent<ArtworkColorController>();
+    //     if (colorController == null) {
+    //         colorController = gameObject.AddComponent<ArtworkColorController>();
+    //     }
+    //     colorController.FadeInEffect();
+    // }
+
+    // public void FadeOut()
+    // {
+    //     var colorController = GetComponent<ArtworkColorController>();
+    //     if (colorController == null) {
+    //         colorController = gameObject.AddComponent<ArtworkColorController>();
+    //     }
+    //     colorController.FadeOutEffect();
+    // }
 
     public void RemoveFromScene(Action onComplete = null)
     {
@@ -83,7 +98,8 @@ public class Artwork : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IM
         if (!MarkedToDestroy) return;
         MarkedToDestroy = false;
         Debug.Log($"Cancelling destroy for Artwork: {gameObject.name}");
-        FadeIn();
+        // FadeIn();
+        GetComponent<ArtworkColorController>().FadeInEffect();
     }
 
 

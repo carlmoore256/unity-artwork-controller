@@ -17,24 +17,20 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
     public string OscAddress => $"/artwork/{Artwork.Id}/line";
 
 
-    void Start()
-    {
-        _lineMaterial = Resources.Load<Material>("Materials/LineMaterial");
-    }
-
     void OnEnable()
     {
         RegisterEndpoints();
+        _lineMaterial = Resources.Load<Material>("Materials/LineMaterial");
 
         _lineTrails.Clear();
-        Artwork.ForeachMotif((motif) => {
-            var lineTrail = motif.gameObject.GetComponent<LineTrail>();
-            if (lineTrail == null) {
-                motif.gameObject.AddComponent<LineTrail>();
-            }
-            lineTrail.Initialize(_trailLength, _endWidth, _startWidth, _lineMaterial);
-            _lineTrails.Add(lineTrail);
-        });
+        // Artwork.ForeachMotif((motif) => {
+        //     var lineTrail = motif.gameObject.GetComponent<LineTrail>();
+        //     if (lineTrail == null) {
+        //         lineTrail = motif.gameObject.AddComponent<LineTrail>();
+        //     }
+        //     lineTrail.Initialize(_trailLength, _endWidth, _startWidth, _lineMaterial);
+        //     _lineTrails.Add(lineTrail);
+        // });
     }
 
     void OnDisable()

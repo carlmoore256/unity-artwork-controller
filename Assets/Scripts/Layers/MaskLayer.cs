@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
+using UnityEngine;
 
 public class MaskLayer : MonoBehaviour
 {
@@ -10,22 +10,25 @@ public class MaskLayer : MonoBehaviour
     private SpriteRenderer _backgroundSprite;
     private SpriteRenderer[] _spriteRenderers;
     private Color _originalColor;
+    private bool _hasInitialized = false;
 
     private void Awake()
     {
         // CurrentOpacity = 0f;
-
-
         // SetOpacity(0f);
+        Initialize();
+        SetOpacity(0f);
+    }
 
+    private void Initialize()
+    {
         _spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
-
-        
-        _backgroundSprite = _spriteRenderers.FirstOrDefault(x => x.gameObject.name.Contains("image-orig"));
-
+        _backgroundSprite = _spriteRenderers.FirstOrDefault(
+            x => x.gameObject.name.Contains("image-orig")
+        );
         _originalColor = GetColor();
-
-        CurrentOpacity = _originalColor.a; 
+        CurrentOpacity = _originalColor.a;
+        _hasInitialized = true;
     }
 
     /// During the build process of the SVG, this is called to add the background sprite renderer
@@ -43,7 +46,7 @@ public class MaskLayer : MonoBehaviour
     public void SetColor(Color color)
     {
         // _backgroundSprite.color = color;
-        foreach(var renderer in _spriteRenderers)
+        foreach (var renderer in _spriteRenderers)
         {
             renderer.color = color;
         }
@@ -52,7 +55,9 @@ public class MaskLayer : MonoBehaviour
     public void SetHueOffset(float offset)
     {
         // get the hsl of the current
-        float H, S, V;
+        float H,
+            S,
+            V;
         Color.RGBToHSV(_originalColor, out H, out S, out V);
 
         // Debug.Log("Hue: " + H + " Offset: " + offset + " New Hue: " + (H + offset));
@@ -78,14 +83,18 @@ public class MaskLayer : MonoBehaviour
         SetColor(_originalColor);
     }
 
-
     public void SetOpacity(float opacity)
     {
+        if (!_hasInitialized)
+        {
+            Initialize();
+        }
+        // Debug.Log($"Trying to set opacity to {opacity} | {name} | _backgroundSprite: {_backgroundSprite} | _spriteRenderers: {_spriteRenderers} | TEST {_spriteRenderers = GetComponentsInChildren<SpriteRenderer>()}");
         Color currentColor = _backgroundSprite.color;
         Color transparentColor = new Color(currentColor.r, currentColor.g, currentColor.b, opacity);
-        foreach(var renderer in _spriteRenderers)
+        foreach (var renderer in _spriteRenderers)
         {
-            renderer.color = transparentColor; 
+            renderer.color = transparentColor;
         }
         CurrentOpacity = opacity;
     }
@@ -101,7 +110,6 @@ public class MaskLayer : MonoBehaviour
             return Color.white;
         }
     }
-
 }
 
 // Technically good, but not needed

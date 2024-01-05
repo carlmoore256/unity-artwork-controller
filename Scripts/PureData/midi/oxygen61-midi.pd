@@ -1,4 +1,4 @@
-#N canvas 353 295 689 929 12;
+#N canvas 353 38 689 916 12;
 #X obj 119 26 ctlin;
 #X floatatom 188 85 5 0 0 0 - - - 0;
 #X floatatom 237 86 5 0 0 0 - - - 0;
@@ -78,7 +78,7 @@
 #X obj 246 226 route 1;
 #X obj 246 254 s mod;
 #X obj 218 474 cnv 19 200 100 empty empty Note\ In 20 12 0 12 #e0e0e0 #404040 0;
-#N canvas 1716 174 792 776 note 1;
+#N canvas 1716 174 792 776 note 0;
 #X obj 116 111 notein;
 #X floatatom 325 148 5 0 0 0 - - - 0;
 #X floatatom 365 147 5 0 0 0 - - - 0;
@@ -143,6 +143,7 @@
 #X obj 144 226 route 64;
 #X obj 144 255 s pedal;
 #X obj 369 545 print NOTE;
+#X floatatom 265 532 5 0 0 0 - - - 0;
 #X connect 0 0 1 0;
 #X connect 0 0 4 0;
 #X connect 0 1 2 0;
@@ -162,5 +163,6 @@
 #X connect 12 0 13 0;
 #X connect 15 0 17 0;
 #X connect 15 0 20 0;
+#X connect 15 0 21 0;
 #X connect 15 1 16 0;
 #X connect 18 0 19 0;

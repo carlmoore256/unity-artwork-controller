@@ -91,3 +91,6 @@ output.wav
 
 
 Assets/Resources/
+
+.DS_Store
+Assets/PointClouds/

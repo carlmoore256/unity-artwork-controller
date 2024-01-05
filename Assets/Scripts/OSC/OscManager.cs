@@ -73,7 +73,7 @@ public class OscManager : MonoBehaviour
     {
         address = $"{RootAddress}{address}";
         var endpoint = _endpoints.FirstOrDefault(x => x.Address == address);
-        Debug.Log("Endpoint: " + endpoint);
+        // Debug.Log("Endpoint: " + endpoint);
         if (endpoint != null)
         {
             endpoint.Deactivate();
