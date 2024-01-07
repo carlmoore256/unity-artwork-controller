@@ -22,6 +22,7 @@
     "com.unity.ugui": "1.0.0",
     "com.unity.vectorgraphics": "2.0.0-preview.21",
     "com.unity.visualscripting": "1.9.1",
+    "io.colyseus.sdk": "https://github.com/colyseus/colyseus-unity3d.git#upm",
     "jp.keijiro.osc-jack": "2.0.0",
     "jp.keijiro.pcx": "1.0.1",
     "com.unity.modules.ai": "1.0.0",

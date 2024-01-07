@@ -155,7 +155,7 @@ public class TransformCoroutineManager : CoroutineManager {
     /// Efficiently update position of owner MonoBehavior transform 
     /// </summary>
     public void MoveTo(Vector3 position, float duration = 1f) {
-        if (Vector3.Equals(_targetTransform.TargetPosition, position))
+        if (Equals(_targetTransform.TargetPosition, position))
             return;
         _targetTransform.TargetPosition = position;
         // check if the dict contains the timed position, also redundantly check if the coroutine is null (probably don't need this)

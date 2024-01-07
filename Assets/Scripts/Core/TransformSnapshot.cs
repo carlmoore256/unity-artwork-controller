@@ -35,4 +35,11 @@ public class TransformSnapshot {
         return new TransformSnapshot(newPosition, newRotation, newScale);
     }
 
+    public void ApplyLerp(TransformSnapshot to, float t)
+    {
+        Position = Vector3.Lerp(Position, to.Position, t);
+        Rotation = Quaternion.Slerp(Rotation, to.Rotation, t);
+        Scale = Vector3.Lerp(Scale, to.Scale, t);
+    }
+
 }

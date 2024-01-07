@@ -4,7 +4,7 @@ using UnityEngine;
 using OscJack;
 using System.Linq;
 
-public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtworkController
+public class SpritePhysicsController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
 
     private List<SpritePhysics> _allSpritePhysics;
@@ -12,7 +12,7 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
     public bool GravityEnabled = false;
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/physics";
+    public string Address => $"/artwork/{Artwork.Id}/physics";
 
 
     [SerializeField] private bool _physicsEnabled = false;
@@ -37,17 +37,17 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
     public void RegisterEndpoints()
     {
         // make these endpoints fill in controller as the gameObject name
-        OscManager.Instance.AddEndpoint($"{OscAddress}/togglePhysics", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/togglePhysics", (OscDataHandle dataHandle) => {
             Debug.Log("Toggling Physics");
             ToggleSpritePhysics();
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/toggleGravity", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/toggleGravity", (OscDataHandle dataHandle) => {
             GravityEnabled = !GravityEnabled;
             ToggleSpriteGravity();
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/explode", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/explode", (OscDataHandle dataHandle) => {
             if (!_physicsEnabled) return;
 
             Vector3 center = _allSpritePhysics.Select(x => x.transform.position).Aggregate((acc, x) => acc + x) / _allSpritePhysics.Count;
@@ -64,9 +64,9 @@ public class SpritePhysicsController : MonoBehaviour, IOscControllable, IArtwork
     public void UnregisterEndpoints()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/togglePhysics");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleGravity");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/explode");
+        OscManager.Instance.RemoveEndpoint($"{Address}/togglePhysics");
+        OscManager.Instance.RemoveEndpoint($"{Address}/toggleGravity");
+        OscManager.Instance.RemoveEndpoint($"{Address}/explode");
     }
 
     private void DisableSpritePhysicsComponents()

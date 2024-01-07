@@ -5,13 +5,13 @@ using OscJack;
 using System.Linq;
 using System;
 
-public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtworkController
+public class PolyphonicMidiController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
     Dictionary<int, float> _activeNotes = new Dictionary<int, float>();
     private Dictionary<int, Action<int, float>> _noteOnActions = new Dictionary<int, Action<int, float>>();
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/midi";
+    public string Address => $"/artwork/{Artwork.Id}/midi";
 
     [SerializeField] private float _scaleAmount = 5f;
     [SerializeField] private float _sizeAttackTime = 0.1f;
@@ -47,7 +47,7 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
     public void RegisterEndpoints()
     {
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/note", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/note", (OscDataHandle dataHandle) => {
             var note = dataHandle.GetElementAsInt(0);
             var velocity = (float)dataHandle.GetElementAsFloat(1);
             var channel = dataHandle.GetElementAsInt(2);
@@ -61,7 +61,7 @@ public class PolyphonicMidiController : MonoBehaviour, IOscControllable, IArtwor
     public void UnregisterEndpoints()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/note");
+        OscManager.Instance.RemoveEndpoint($"{Address}/note");
     }
 
     void NoteIn(int note, float velocity, int channel)

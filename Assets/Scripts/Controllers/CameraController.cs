@@ -5,9 +5,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Moveable))]
-public class CameraController : MonoBehaviour, IOscControllable
+public class CameraController : MonoBehaviour, INetworkEndpoint
 {
-    public string OscAddress => "/camera";
+    public string Address => "/camera";
     public Transform OrbitTarget
     {
         get => _orbitTarget;

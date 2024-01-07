@@ -4,9 +4,9 @@ using UnityEngine;
 using OscJack;
 using UnityEngine.SceneManagement;
 
-public class RuntimeController : MonoBehaviour, IOscControllable
+public class RuntimeController : MonoBehaviour, INetworkEndpoint
 {
-    public string OscAddress => "/runtime";
+    public string Address => "/runtime";
 
 
     private bool _reset = false;
@@ -34,7 +34,7 @@ public class RuntimeController : MonoBehaviour, IOscControllable
         //     // Application.Quit();
         // });
 
-        OscManager.Instance.AddStaticEndpoint($"{OscAddress}/reload", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddStaticEndpoint($"{Address}/reload", (OscDataHandle dataHandle) => {
             _reset = true;
         });
     }
@@ -42,8 +42,8 @@ public class RuntimeController : MonoBehaviour, IOscControllable
     public void UnregisterEndpoints()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/quit");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/reload");
+        OscManager.Instance.RemoveEndpoint($"{Address}/quit");
+        OscManager.Instance.RemoveEndpoint($"{Address}/reload");
     }
 
     // Update is called once per frame

@@ -4,9 +4,9 @@ using UnityEngine;
 using OscJack;
 using System.Linq;
 
-public class LogoController : MonoBehaviour, IOscControllable
+public class LogoController : MonoBehaviour, INetworkEndpoint
 {
-    public string OscAddress => "/logo";
+    public string Address => "/logo";
 
     public Logo[] Logos => GetComponentsInChildren<Logo>(true);
 
@@ -55,25 +55,25 @@ public class LogoController : MonoBehaviour, IOscControllable
 
     public void RegisterEndpoints()
     {
-        OscManager.Instance.AddEndpoint($"{OscAddress}/enableLogo", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/enableLogo", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsString(0);
             Debug.Log($"Enable Logo {value}");
             EnableLogo(value);
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/disableLogo", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/disableLogo", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsString(0);
             Debug.Log($"Disable Logo {value}");
             DisableLogo(value);
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/toggleLogo", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/toggleLogo", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsString(0);
             Debug.Log($"Toggle Logo {value}");
             ToggleLogo(value);
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/rotateSpeed", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/rotateSpeed", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsFloat(0);
             Debug.Log($"Rotate Speed {value}");
             if (_activeLogo != null) {
@@ -81,7 +81,7 @@ public class LogoController : MonoBehaviour, IOscControllable
             }
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/scale", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/scale", (OscDataHandle dataHandle) => {
             var value = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0.1f, 3f);
             Debug.Log($"Scale {value}");
             if (_activeLogo != null) {
@@ -90,7 +90,7 @@ public class LogoController : MonoBehaviour, IOscControllable
             }
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/reset", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/reset", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsFloat(0);
             Debug.Log($"Reset {value}");
             if (_activeLogo != null) {
@@ -102,9 +102,9 @@ public class LogoController : MonoBehaviour, IOscControllable
     public void UnregisterEndpoints()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLogo");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/disableLogo");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggleLogo");
+        OscManager.Instance.RemoveEndpoint($"{Address}/enableLogo");
+        OscManager.Instance.RemoveEndpoint($"{Address}/disableLogo");
+        OscManager.Instance.RemoveEndpoint($"{Address}/toggleLogo");
     }
 
     private void EnableLogo(string id)

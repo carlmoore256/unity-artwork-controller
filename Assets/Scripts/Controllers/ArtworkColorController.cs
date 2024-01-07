@@ -3,10 +3,10 @@ using OscJack;
 using UnityEngine;
 
 // [RequireComponent(typeof(Moveable))]
-public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkController
+public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/color";
+    public string Address => $"/artwork/{Artwork.Id}/color";
 
     // void Start()
     // {
@@ -32,9 +32,9 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
     {
         if (OscManager.Instance == null)
             return;
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/opacity");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/rotate");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/color");
+        OscManager.Instance.RemoveEndpoint($"{Address}/opacity");
+        OscManager.Instance.RemoveEndpoint($"{Address}/rotate");
+        OscManager.Instance.RemoveEndpoint($"{Address}/color");
     }
 
     public void ResetToTransparent()
@@ -50,7 +50,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
     public void RegisterEndpoints()
     {
         OscManager.Instance.AddEndpoint(
-            $"{OscAddress}/opacity",
+            $"{Address}/opacity",
             (OscDataHandle dataHandle) =>
             {
                 var fade = dataHandle.GetElementAsFloat(0);
@@ -65,7 +65,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{OscAddress}/opacityDelayed",
+            $"{Address}/opacityDelayed",
             (OscDataHandle dataHandle) =>
             {
                 var fade = dataHandle.GetElementAsFloat(0);
@@ -79,7 +79,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{OscAddress}/rotate",
+            $"{Address}/rotate",
             (OscDataHandle dataHandle) =>
             {
                 var value = dataHandle.GetElementAsFloat(0);
@@ -96,7 +96,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{OscAddress}/fadeIn",
+            $"{Address}/fadeIn",
             (OscDataHandle dataHandle) =>
             {
                 FadeInEffect();
@@ -104,7 +104,7 @@ public class ArtworkColorController : MonoBehaviour, IOscControllable, IArtworkC
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{OscAddress}/fadeOut",
+            $"{Address}/fadeOut",
             (OscDataHandle dataHandle) =>
             {
                 FadeOutEffect();

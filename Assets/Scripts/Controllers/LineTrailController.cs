@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using OscJack;
 
-public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkController
+public class LineTrailController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
     [SerializeField] private int _trailLength = 10;
     [SerializeField] private bool _isEnabled = false;
@@ -14,7 +14,7 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
     private Material _lineMaterial;
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"/artwork/{Artwork.Id}/line";
+    public string Address => $"/artwork/{Artwork.Id}/line";
 
 
     void OnEnable()
@@ -39,11 +39,11 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
     }
 
     public void RegisterEndpoints() {
-        OscManager.Instance.AddEndpoint($"{OscAddress}/toggle", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/toggle", (OscDataHandle dataHandle) => {
             _isEnabled = !_isEnabled;
         });
 
-        OscManager.Instance.AddEndpoint($"{OscAddress}/length", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/length", (OscDataHandle dataHandle) => {
             var length = dataHandle.GetElementAsInt(0);
             if (length <= 0) {
                 if (_isEnabled) DisableLineTrails();
@@ -60,8 +60,8 @@ public class LineTrailController : MonoBehaviour, IOscControllable, IArtworkCont
     public void UnregisterEndpoints()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/toggle");
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/length");
+        OscManager.Instance.RemoveEndpoint($"{Address}/toggle");
+        OscManager.Instance.RemoveEndpoint($"{Address}/length");
     }
 
     private void DisableLineTrails() {

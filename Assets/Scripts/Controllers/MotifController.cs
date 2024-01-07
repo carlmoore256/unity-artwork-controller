@@ -5,10 +5,10 @@ using OscJack;
 
 
 // CONSIDER REMOVING! ARTWORK TAKES CARE OF THIS
-public class MotifController : MonoBehaviour, IOscControllable, IArtworkController
+public class MotifController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
     public Artwork Artwork => GetComponent<Artwork>();
-    public string OscAddress => $"artwork/{Artwork.Id}/motif";
+    public string Address => $"artwork/{Artwork.Id}/motif";
 
     [SerializeField] private GameObject _background;
 
@@ -30,7 +30,7 @@ public class MotifController : MonoBehaviour, IOscControllable, IArtworkControll
 
     void OnDisable()
     {
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/bgFade");
+        OscManager.Instance.RemoveEndpoint($"{Address}/bgFade");
     }
 
     void OnDestroy()
@@ -41,7 +41,7 @@ public class MotifController : MonoBehaviour, IOscControllable, IArtworkControll
 
     public void RegisterEndpoints()
     {
-        OscManager.Instance.AddEndpoint($"{OscAddress}/bgFade", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{Address}/bgFade", (OscDataHandle dataHandle) => {
             var fade = dataHandle.GetElementAsFloat(0);
             // Artwork.BackgroundFade(fade);
         });
@@ -49,7 +49,7 @@ public class MotifController : MonoBehaviour, IOscControllable, IArtworkControll
 
     public void UnregisterEndpoints()
     {
-        OscManager.Instance.RemoveEndpoint($"{OscAddress}/bgFade");
+        OscManager.Instance.RemoveEndpoint($"{Address}/bgFade");
     }
 
 
