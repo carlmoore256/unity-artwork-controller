@@ -1,195 +1,206 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
-using System;
+
+// we might want to set the max tweens capacity to something higher
+// Set max Tweeners to 3000 and max Sequences to 200
+// DOTween.SetTweensCapacity(3000, 200);
 
 public class Moveable : MonoBehaviour
 {
+    public TransformSnapshot CurrentSnapshot
+    {
+        get { return new TransformSnapshot(transform); }
+    }
 
-    public TransformCoroutineManager CoroutineManager;
+    /** The anchor point which other additional transforms are composited onto **/
+    public TransformSnapshot AnchorSnapshot { get; set; }
 
-    public TransformSnapshot CurrentSnapshot { get { return new TransformSnapshot(transform); } }
-
-
-    public Vector3 DefaultPosition;
-    public Quaternion DefaultRotation;
-    public Vector3 DefaultScale;
-
-    public TransformSnapshot DefaultSnapshot;
-    private TransformSnapshot _referenceSnapshot;
+    /** The target transform to tween to **/
     public TransformSnapshot TargetSnapshot;
 
-    public float MoveDuration = 0.5f;
-    public float DefaultDuration = 0.6f;
+    /** The duration of the tween **/
+    public float TweenDuration = 0.1f;
 
-    public bool UseLocal = false;
+    /** The amount of motion applied as composited transforms **/
+    public float BlendPercent { get; set; } = 0f;
+    private Tweener _currentPositionTween;
+    private Tweener _currentRotationTween;
+    private Tweener _currentScaleTween;
 
-    public UnityAction OnTransformStart; 
-    public UnityAction OnTransformEnd;
-    private float _lerp = 0f;
+    private Vector3 _accumulatedPosition = Vector3.zero;
+    private Vector3 _accumulatedScale = Vector3.zero;
+    private Quaternion _accumulatedRotation = Quaternion.identity;
 
-    // private Vector3 _targetPosition;
-    // private Vector3 _targetScale;
-    // private Quaternion _targetRotation;
-    // public TransformSnapshot TargetSnapshot => new TransformSnapshot(_targetPosition, _targetRotation, _targetScale);
+    public Vector3 TargetPosition => AnchorSnapshot.Position + _accumulatedPosition;
+    public Vector3 TargetScale => AnchorSnapshot.Scale + _accumulatedScale;
+    public Quaternion TargetRotation => AnchorSnapshot.Rotation * _accumulatedRotation;
 
     void Start()
     {
-        DefaultSnapshot = new TransformSnapshot(transform);
+        AnchorSnapshot = new TransformSnapshot(transform);
         TargetSnapshot = new TransformSnapshot(transform);
-
-        DefaultPosition = transform.position;
-        DefaultRotation = transform.rotation;
-        DefaultScale = transform.localScale;
+        InitializeTweens();
     }
 
-    void OnEnable()
+    /** Updates the anchor transform snapshot to the object's current position **/
+    public void UpdateAnchorSnapshot()
     {
-        CoroutineManager = new TransformCoroutineManager(this, 
-        ()=>{
-            OnTransformStart?.Invoke();
-        }, 
-        ()=> {
-            OnTransformEnd?.Invoke();
-        }, 
-        UseLocal);
+        AnchorSnapshot = CurrentSnapshot;
     }
 
-    public void TransformTo(TransformSnapshot snapshot, float duration=-1, Action onComplete=null)
+    public void SetTweenDuration(float duration)
     {
-        if (duration == -1) duration = DefaultDuration;
-        TargetSnapshot = snapshot;
-        if (onComplete != null) {
+        TweenDuration = duration;
+        InitializeTweens(duration);
+    }
+
+    private void InitializeTweens(float duration = 1.0f)
+    {
+        _currentPositionTween = transform
+            .DOMove(AnchorSnapshot.Position, duration)
+            .SetAutoKill(false);
+        _currentRotationTween = transform
+            .DORotateQuaternion(AnchorSnapshot.Rotation, duration)
+            .SetAutoKill(false);
+        _currentScaleTween = transform.DOScale(AnchorSnapshot.Scale, duration).SetAutoKill(false);
+    }
+
+    public void TransformTo(
+        TransformSnapshot snapshot,
+        float duration = -1,
+        Action onComplete = null
+    )
+    {
+        transform.DOMove(snapshot.Position, duration).OnComplete(() => onComplete?.Invoke());
+        transform.DORotateQuaternion(snapshot.Rotation, duration);
+        transform.DOScale(snapshot.Scale, duration);
+    }
+
+    public void AddPosition(Vector3 position)
+    {
+        _accumulatedPosition += position;
+    }
+
+    public void AddRotation(Quaternion rotation)
+    {
+        _accumulatedRotation *= rotation;
+    }
+
+    public void AddScale(Vector3 scale)
+    {
+        _accumulatedScale += scale;
+    }
+
+    public void SetPosition(Vector3 position, float duration = -1, Action onComplete = null)
+    {
+        transform.DOMove(position, duration).OnComplete(() => onComplete?.Invoke());
+    }
+
+    public void SetRotation(Quaternion rotation, float duration = -1, Action onComplete = null)
+    {
+        transform.DORotateQuaternion(rotation, duration).OnComplete(() => onComplete?.Invoke());
+    }
+
+    public void SetScale(Vector3 scale, float duration = -1, Action onComplete = null)
+    {
+        transform.DOScale(scale, duration).OnComplete(() => onComplete?.Invoke());
+    }
+
+    public void EnvelopeScale(
+        float scale,
+        float timeAttack,
+        float timeRelease,
+        Action onComplete = null
+    )
+    {
+        Vector3 newScale = AnchorSnapshot.Scale * scale;
+        Sequence sequence = DOTween.Sequence();
+        sequence.Append(transform.DOScale(newScale, timeAttack));
+        sequence.Append(transform.DOScale(AnchorSnapshot.Scale, timeRelease));
+        sequence.OnComplete(() => onComplete?.Invoke());
+    }
+
+    // public void LookAt(Vector3 target, float duration = -1, Action onComplete = null)
+    // {
+    //     if (duration == -1)
+    //         duration = DefaultDuration;
+    //     Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
+    //     TargetSnapshot.Rotation = targetRotation;
+    //     if (onComplete != null)
+    //     {
+    //         CoroutineHelpers.DelayedAction(onComplete, duration, this);
+    //     }
+    // }
+
+    public void ResetToDefault(float duration = -1, Action onComplete = null)
+    {
+        TargetSnapshot = AnchorSnapshot.Copy();
+        if (onComplete != null)
+        {
             CoroutineHelpers.DelayedAction(onComplete, duration, this);
         }
     }
-
-    public void MoveTo(Vector3 position, float duration=-1, Action onComplete=null)
-    {
-        if (duration == -1) duration = DefaultDuration;
-        TargetSnapshot.Position = position;
-        if (onComplete != null) {
-            CoroutineHelpers.DelayedAction(onComplete, duration, this);
-        }
-    }
-
-    public void RotateTo(Quaternion rotation, float duration=-1, Action onComplete=null)
-    {
-        if (duration == -1) duration = DefaultDuration;
-        TargetSnapshot.Rotation = rotation;
-        if (onComplete != null) {
-            CoroutineHelpers.DelayedAction(onComplete, duration, this);
-        }
-    }
-
-    public void ScaleTo(Vector3 scale, float duration=-1, Action onComplete=null)
-    {
-        if (duration == -1) duration = DefaultDuration;
-        TargetSnapshot.Scale = scale;
-        
-        if (onComplete != null) {
-            CoroutineHelpers.DelayedAction(onComplete, duration, this);
-        }
-    }
-
-    public void EnvelopeScale(float scale, float timeAttack, float timeRelease, Action onComplete=null)
-    {
-        Vector3 newScale = DefaultSnapshot.Scale * scale;
-        if (_envelopeScaleCoroutine != null) StopCoroutine(_envelopeScaleCoroutine);
-        _envelopeScaleCoroutine = StartCoroutine(EnvelopeScaleCoroutine(newScale, DefaultSnapshot.Scale, timeAttack, timeRelease, onComplete));
-    }
-
-    public void LookAt(Vector3 target, float duration=-1, Action onComplete=null)
-    {
-        if (duration == -1) duration = DefaultDuration;
-        Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
-        TargetSnapshot.Rotation = targetRotation;
-        if (onComplete != null) {
-            CoroutineHelpers.DelayedAction(onComplete, duration, this);
-        }
-    }
-
-    public void ResetToDefault(float duration=-1, Action onComplete=null)
-    {
-        if (duration == -1) duration = DefaultDuration;
-        TargetSnapshot = DefaultSnapshot.Copy();
-        if (onComplete != null) {
-            CoroutineHelpers.DelayedAction(onComplete, duration, this);
-        }
-    }
-
 
     public void LerpToDefault(float t)
     {
-        _referenceSnapshot = DefaultSnapshot.Copy();
-        _lerp = t;
+        AnchorSnapshot = AnchorSnapshot.Copy();
+        BlendPercent = t;
     }
 
     public void LerpToReference(TransformSnapshot reference, float t)
     {
-        _referenceSnapshot = reference;
-        _lerp = t;
+        AnchorSnapshot = reference;
+        BlendPercent = t;
     }
 
-    private void Update()
+    private void ResetAccumulators()
     {
-        // now we have to lerp between _referenceSnapshot and _targetSnapshot
-        if (_lerp > 0f) 
-        {
-            var lerp = TransformSnapshot.NewFromLerp(TargetSnapshot, _referenceSnapshot, _lerp);
-            CoroutineManager.TransformTo(lerp, MoveDuration);
-        } else {
-            CoroutineManager.TransformTo(TargetSnapshot, MoveDuration);
-        }
+        _accumulatedPosition = Vector3.zero;
+        _accumulatedScale = Vector3.zero;
+        _accumulatedRotation = Quaternion.identity;
     }
 
-    private Coroutine _envelopeScaleCoroutine;
-
-    private IEnumerator EnvelopeScaleCoroutine(Vector3 newScale, Vector3 endScale, float timeAttack, float timeRelease, Action onComplete=null)
+    private void ApplyTargetPosition()
     {
-        var t = 0f;
-        Vector3 initialScale = transform.localScale;
-        while (t < 1)
+        var target = TargetPosition;
+        if (target != transform.position)
         {
-            t += Time.deltaTime / timeAttack;
-            transform.localScale = Vector3.Lerp(initialScale, newScale, t);
-            yield return null;
+            if (BlendPercent > 0f)
+                target = Vector3.Lerp(target, AnchorSnapshot.Position, BlendPercent);
+            _currentPositionTween.ChangeEndValue(target, true).Restart();
         }
-        transform.localScale = newScale;
-        t = 0f;
-        while (t < 1)
-        {
-            t += Time.deltaTime / timeRelease;
-            transform.localScale = Vector3.Lerp(newScale, endScale, t);
-            yield return null;
-        }
-        transform.localScale = endScale;
-        if (onComplete != null) onComplete();
     }
 
-
-    private Coroutine _scaleToCoroutine;
-    private IEnumerator ScaleToCoroutine(Vector3 newScale, Vector3 originalScale, float durationAttack, float durationDecay)
+    private void ApplyTargetRotation()
     {
-        var t = 0f;
-        Vector3 initialScale = transform.localScale;
-        while (t < durationAttack)
+        var target = TargetRotation;
+        if (target != transform.rotation)
         {
-            t += Time.deltaTime / durationAttack;
-            transform.localScale = Vector3.Lerp(initialScale, newScale, t);
-            yield return null;
+            if (BlendPercent > 0f)
+                target = Quaternion.Lerp(target, AnchorSnapshot.Rotation, BlendPercent);
+            _currentRotationTween.ChangeEndValue(target, true).Restart();
         }
-        transform.localScale = newScale;
-        t = 0f;
-        while (t < durationDecay)
-        {
-            t += Time.deltaTime / durationDecay;
-            transform.localScale = Vector3.Lerp(newScale, originalScale, t);
-            yield return null;
-        }
-        transform.localScale = originalScale;
     }
 
+    private void ApplyTargetScale()
+    {
+        var target = TargetScale;
+        if (target != transform.localScale)
+        {
+            if (BlendPercent > 0f)
+                target = Vector3.Lerp(target, AnchorSnapshot.Scale, BlendPercent);
+            _currentScaleTween.ChangeEndValue(target, true).Restart();
+        }
+    }
 
+    // make sure this happens after anything changes the position during update
+    private void LateUpdate()
+    {
+        ApplyTargetPosition();
+        ApplyTargetRotation();
+        ApplyTargetScale();
+        ResetAccumulators();
+    }
 }

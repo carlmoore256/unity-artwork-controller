@@ -30,7 +30,7 @@ public class Logo : MonoBehaviour
         Debug.Log($"Logo {Id} enabled");
         _spriteRenderer = GetComponent<SpriteRenderer>();
         
-        _defaultSnapshot = _moveable.DefaultSnapshot;
+        _defaultSnapshot = _moveable.AnchorSnapshot;
         SetOpacity(0f);
 
       

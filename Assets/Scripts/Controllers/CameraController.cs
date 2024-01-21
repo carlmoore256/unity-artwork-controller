@@ -164,7 +164,8 @@ public class CameraController : MonoBehaviour, INetworkEndpoint
             Time.deltaTime * _rotateSpeed
         );
 
-        _moveable.RotateTo(smoothRotation, _lerpSpeed);
+        _moveable.SetRotation(smoothRotation, _lerpSpeed);
+        // _moveable.AddRotation(smoothRotation, _lerpSpeed);
         // _rigidbody.AddTorque(transform.up * _rotateInput.x * _rotateSpeed, ForceMode.Impulse);
 
 
@@ -178,7 +179,8 @@ public class CameraController : MonoBehaviour, INetworkEndpoint
         Vector3 targetPosition = new Vector3(x, transform.position.y, z) + _orbitTarget.position;
 
         // move to position
-        _moveable.MoveTo(targetPosition, _lerpSpeed);
+        // _moveable.AddPosition(targetPosition, _lerpSpeed);
+        _moveable.SetPosition(targetPosition, _lerpSpeed);
     }
 
     private void MoveCamera(Vector3 translateInput)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+// mask layer seems to be something that we set colors with
 public class MaskLayer : MonoBehaviour
 {
     public float CurrentOpacity { get; private set; }
@@ -54,27 +55,8 @@ public class MaskLayer : MonoBehaviour
 
     public void SetHueOffset(float offset)
     {
-        // get the hsl of the current
-        float H,
-            S,
-            V;
-        Color.RGBToHSV(_originalColor, out H, out S, out V);
-
-        // Debug.Log("Hue: " + H + " Offset: " + offset + " New Hue: " + (H + offset));
-
-        // set saturation to a cosine
-        S = Mathf.Cos((offset * Mathf.PI * 2f) + Mathf.PI) * 0.5f + 0.5f;
-
-        // add the offset
-        H += offset;
-        H = H % 1f;
-
-        // set the new color
-        Color newColor = Color.HSVToRGB(H, S, V);
-
-        Color currentColor = GetColor();
-
-        newColor.a = currentColor.a;
+        Color newColor = _originalColor.WithHueRotation(offset);
+        newColor.a = GetColor().a;
         SetColor(newColor);
     }
 

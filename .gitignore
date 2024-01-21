@@ -94,3 +94,8 @@ Assets/Resources/
 
 .DS_Store
 Assets/PointClouds/
+Assets/Meshes/
+Assets/Meshes.meta
+Assets/Plugins/
+Assets/DOTWeen Examples.meta
+Assets/DOTWeen Examples/
