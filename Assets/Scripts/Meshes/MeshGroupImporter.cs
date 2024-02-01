@@ -127,6 +127,7 @@ public class MeshGroupImporter : MonoBehaviour
         {
             renderer.material.SetTexture("_BumpMap", normalMap); // Set normal map
             renderer.material.EnableKeyword("_NORMALMAP"); // Enable normal map keyword
+            renderer.material.SetFloat("_PhaseFactor", Random.Range(0.0f, Mathf.PI * 2.0f));
         }
 
         if (addCollider)
@@ -179,6 +180,29 @@ public class MeshGroupImporter : MonoBehaviour
         }
 
         meshGroupParent.transform.localScale = new Vector3(scale, scale, scale * depthScale);
+
+        // center the object
+        // get bounds of all objects
+        var bounds = new Bounds(meshGroupParent.transform.position, Vector3.zero);
+        foreach (Renderer renderer in meshGroupParent.GetComponentsInChildren<Renderer>())
+        {
+            bounds.Encapsulate(renderer.bounds);
+        }
+
+        Debug.Log($"Bounds: {bounds}");
+
+        // get center of bounds
+        var center = bounds.center;
+
+        // transform each object so that the center is at the origin
+        foreach (Transform child in meshGroupParent.transform)
+        {
+            child.transform.position -= center;
+        }
+        // transform.position = new Vector3(-center.x, -center.y, -center.z);
+
+
+
     }
 }
 #endif

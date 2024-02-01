@@ -40,8 +40,7 @@ public class Logo : MonoBehaviour
             Debug.Log("Logo faded in");
         });
 
-        _defaultSnapshot.Scale = transform.localScale;
-        _defaultSnapshot.Rotation = transform.rotation;
+        _defaultSnapshot = new TransformSnapshot(transform);
     }
 
     public void FadeOut()

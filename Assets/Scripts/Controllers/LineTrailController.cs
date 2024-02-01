@@ -14,14 +14,13 @@ public class LineTrailController : MonoBehaviour, INetworkEndpoint, IArtworkCont
     private Material _lineMaterial;
 
     public Artwork Artwork => GetComponent<Artwork>();
-    public string Address => $"/artwork/{Artwork.Id}/line";
+    public string Address => $"/line";
 
 
     void OnEnable()
     {
-        RegisterEndpoints();
+        // Register();
         _lineMaterial = Resources.Load<Material>("Materials/LineMaterial");
-
         _lineTrails.Clear();
         // Artwork.ForeachMotif((motif) => {
         //     var lineTrail = motif.gameObject.GetComponent<LineTrail>();
@@ -35,15 +34,15 @@ public class LineTrailController : MonoBehaviour, INetworkEndpoint, IArtworkCont
 
     void OnDisable()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
-    public void RegisterEndpoints() {
-        OscManager.Instance.AddEndpoint($"{Address}/toggle", (OscDataHandle dataHandle) => {
+    public void Register(string baseAddress) {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/line/toggle", (OscDataHandle dataHandle) => {
             _isEnabled = !_isEnabled;
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/length", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/line/length", (OscDataHandle dataHandle) => {
             var length = dataHandle.GetElementAsInt(0);
             if (length <= 0) {
                 if (_isEnabled) DisableLineTrails();
@@ -52,16 +51,17 @@ public class LineTrailController : MonoBehaviour, INetworkEndpoint, IArtworkCont
 
             if (!_isEnabled) EnableLineTrails();
             _lineTrails.ForEach(trail => trail.SetLineCount(length));
-        });
+        }, this);
 
         // add a spider-web effect
     }
 
-    public void UnregisterEndpoints()
+    public void Unregister()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{Address}/toggle");
-        OscManager.Instance.RemoveEndpoint($"{Address}/length");
+        OscManager.Instance.RemoveAllEndpointsForOwner(this);
+        // OscManager.Instance.RemoveEndpoint($"{Address}/toggle");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/length");
     }
 
     private void DisableLineTrails() {

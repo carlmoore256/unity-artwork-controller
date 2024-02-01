@@ -1,6 +1,7 @@
-using UnityEngine;
 using System;
 using System.Collections;
+using UnityEngine;
+using System.Threading.Tasks;
 
 public static class CoroutineHelpers
 {
@@ -10,18 +11,26 @@ public static class CoroutineHelpers
         action();
     }
 
-    public static void DelayedAction(Action action, float delay, MonoBehaviour monoBehaviour)
+    public static Coroutine DelayedAction(Action action, float delay, MonoBehaviour monoBehaviour)
     {
-        monoBehaviour.StartCoroutine(DelayedAction(action, delay));
+        return monoBehaviour.StartCoroutine(DelayedAction(action, delay));
     }
 
-    public static void LerpAction(Action<float> action, Action onComplete, float duration, MonoBehaviour monoBehaviour)
+    public static Coroutine LerpAction(
+        this MonoBehaviour monoBehaviour,
+        Action<float> action,
+        float duration,
+        Action onComplete = null
+    )
     {
-        monoBehaviour.StartCoroutine(LerpAction(action, duration));
+        return monoBehaviour.StartCoroutine(LerpAction(action, duration, onComplete));
     }
 
-
-    private static IEnumerator LerpAction(Action<float> action, float duration)
+    private static IEnumerator LerpAction(
+        Action<float> action,
+        float duration,
+        Action onComplete = null
+    )
     {
         float startTime = Time.time;
         float endTime = startTime + duration;
@@ -31,9 +40,32 @@ public static class CoroutineHelpers
             action(t);
             yield return null;
         }
+        onComplete?.Invoke();
     }
 
-    private static IEnumerator ChangeColor(object obj, Color startColor, Color endColor, float duration)
+    public static async Task LerpActionAsync(
+        Action<float> action,
+        float duration,
+        Action onComplete = null
+    )
+    {
+        float startTime = Time.time;
+        float endTime = startTime + duration;
+        while (Time.time < endTime)
+        {
+            float t = (Time.time - startTime) / duration;
+            action(t);
+            await Task.Yield(); // Yield to the next frame
+        }
+        onComplete?.Invoke();
+    }
+
+    private static IEnumerator ChangeColor(
+        object obj,
+        Color startColor,
+        Color endColor,
+        float duration
+    )
     {
         float startTime = Time.time;
         float endTime = startTime + duration;
@@ -50,7 +82,13 @@ public static class CoroutineHelpers
         }
     }
 
-    public static void ChangeColor(object obj, Color startColor, Color endColor, float duration, MonoBehaviour monoBehaviour)
+    public static void ChangeColor(
+        object obj,
+        Color startColor,
+        Color endColor,
+        float duration,
+        MonoBehaviour monoBehaviour
+    )
     {
         monoBehaviour.StartCoroutine(ChangeColor(obj, startColor, endColor, duration));
     }

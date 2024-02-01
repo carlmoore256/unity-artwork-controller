@@ -28,26 +28,26 @@ public class PolyphonicMidiController : MonoBehaviour, INetworkEndpoint, IArtwor
 
     private Dictionary<int, Coroutine> _scaleCoroutines = new Dictionary<int, Coroutine>();
 
-    void OnEnable()
-    {
-        RegisterEndpoints();
-    }
+    // void OnEnable()
+    // {
+    //     Register();
+    // }
 
     void OnDisable()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
     void OnDestroy()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
 
-    public void RegisterEndpoints()
+    public void Register(string baseAddress)
     {
 
-        OscManager.Instance.AddEndpoint($"{Address}/note", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/midi/note", (OscDataHandle dataHandle) => {
             var note = dataHandle.GetElementAsInt(0);
             var velocity = (float)dataHandle.GetElementAsFloat(1);
             var channel = dataHandle.GetElementAsInt(2);
@@ -55,13 +55,14 @@ public class PolyphonicMidiController : MonoBehaviour, INetworkEndpoint, IArtwor
             Debug.Log($"Note: {note} Velocity: {velocity} Channel: {channel}");
 
             NoteIn(note, velocity, channel);
-        });
+        }, this);
     }
 
-    public void UnregisterEndpoints()
+    public void Unregister()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{Address}/note");
+        OscManager.Instance.RemoveAllEndpointsForOwner(this);
+        // OscManager.Instance.RemoveEndpoint($"{Address}/note");
     }
 
     void NoteIn(int note, float velocity, int channel)

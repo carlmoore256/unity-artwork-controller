@@ -14,12 +14,13 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
     private int _currentlySelectedArtworkIndex = 0;
     public Artwork[] ActiveArtworks => gameObject.GetComponentsInChildren<Artwork>();
 
+    [SerializeField]
     private GameObject[] _artworkPrefabs;
     private GameObject[] _activeArtworks;
     public string ResourcePath = "Artworks";
     private readonly string _artworkNamePrefix = "Artwork__";
 
-    private EndpointHandler _endpointHandler;
+    // private EndpointHandler _endpointHandler;
 
     void Start()
     {
@@ -30,38 +31,33 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
         }
     }
 
+    // what if there was an IParameterizedController interface?
+    // that exposed a list of all the parameters
+
     void OnEnable()
     {
         // _endpointHandler = new EndpointHandler(this, "/scene");
-        RegisterEndpoints();
+        Register("/scene");
     }
 
     void OnDisable()
     {
-        _endpointHandler.UnregisterEndpoints();
+        Unregister();
+        // _endpointHandler.UnregisterEndpoints();
     }
 
-    void OnDestroy()
-    {
-        _endpointHandler.UnregisterEndpoints();
-    }
-
-    public void UnregisterEndpoints()
+    public void Unregister()
     {
         if (OscManager.Instance == null)
             return;
-        OscManager.Instance.RemoveEndpoint($"{Address}/toggleArtwork");
-        OscManager.Instance.RemoveEndpoint($"{Address}/selectArtwork");
-        OscManager.Instance.RemoveEndpoint($"{Address}/enableArtwork");
-        OscManager.Instance.RemoveEndpoint($"{Address}/disableArtwork");
+        OscManager.Instance.RemoveAllEndpointsForOwner(this);
     }
 
-    public void RegisterEndpoints()
+    public void Register(string address)
     {
         // make these endpoints fill in controller as the gameObject name
-
         OscManager.Instance.AddEndpoint(
-            $"{Address}/toggleArtworkIdx",
+            $"{address}/toggleArtworkIdx",
             (OscDataHandle dataHandle) =>
             {
                 var value = dataHandle.GetElementAsInt(0);
@@ -69,55 +65,62 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
                     $"Toggled Artwork index {value} | number of artworks {ActiveArtworks.Length}"
                 );
                 ToggleArtworkByIndex(value);
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/toggleArtwork",
+            $"{address}/toggleArtwork",
             (OscDataHandle dataHandle) =>
             {
+                Debug.Log("Toggled Artwork");
                 var value = dataHandle.GetElementAsString(0);
                 Debug.Log($"Toggled Artwork {value} | number of artworks {ActiveArtworks.Length}");
                 ToggleArtworkById(value);
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/selectArtwork",
+            $"{address}/selectArtwork",
             (OscDataHandle dataHandle) =>
             {
                 _currentlySelectedArtworkIndex = dataHandle.GetElementAsInt(0);
                 Debug.Log($"Selected Artwork {_currentlySelectedArtworkIndex}");
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/enableArtwork",
+            $"{address}/enableArtwork",
             (OscDataHandle dataHandle) =>
             {
                 var value = dataHandle.GetElementAsString(0);
                 Debug.Log($"Enable Artwork {value}");
                 EnableArtworkById(value);
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/disableArtwork",
+            $"{address}/disableArtwork",
             (OscDataHandle dataHandle) =>
             {
                 var value = dataHandle.GetElementAsString(0);
                 Debug.Log($"Disable Artwork {value}");
                 DisableArtworkById(value);
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/clear",
+            $"{address}/clear",
             (OscDataHandle dataHandle) =>
             {
                 Debug.Log($"Clearing Scene");
                 ClearScene();
-            }
+            },
+            this
         );
     }
 
@@ -139,13 +142,13 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
 
         // var artwork = ActiveArtworks.Find(x => x.Id == id);
         var artwork = ActiveArtworks.FirstOrDefault(x => x.gameObject.name == artworkName);
+        Debug.Log($"Artwork {artworkName} {artwork}");
         if (artwork != null)
         {
             Debug.Log($"Artwork {id} already active");
             artwork.CancelDestroy();
             return;
         }
-        ;
 
         var artworkPrefab = _artworkPrefabs.FirstOrDefault(x => x.GetComponent<Artwork>().Id == id);
         if (artworkPrefab == null)

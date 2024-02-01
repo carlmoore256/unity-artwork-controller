@@ -6,6 +6,10 @@ public interface INetworkEndpoint
     string Address { get; }
     // void ApplyParameters(T parameters);
 
+    // this way, endpoints can recursively register themselves
+    void Register(string baseAddress); 
+    void Unregister();
+
     // should also contain some endpoint metadata
     // EndpointMetadata
 }

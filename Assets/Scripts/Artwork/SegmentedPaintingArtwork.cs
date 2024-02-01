@@ -7,3 +7,7 @@ public class SegmentedPaintingArtwork : MonoBehaviour
     // each of which can have a command issued to it
     
 }
+
+
+// some abstract object that can be used to recieve network commands, then
+// relay them to some parameterizable thing

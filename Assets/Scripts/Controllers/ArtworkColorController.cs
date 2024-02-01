@@ -6,7 +6,7 @@ using UnityEngine;
 public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
     public Artwork Artwork => GetComponent<Artwork>();
-    public string Address => $"/artwork/{Artwork.Id}/color";
+    public string Address => $"/color";
 
     // void Start()
     // {
@@ -14,27 +14,28 @@ public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkC
 
     void OnEnable()
     {
-        RegisterEndpoints();
+        // Register();
         ResetToTransparent();
     }
 
     void OnDisable()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
     void OnDestroy()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
-    public void UnregisterEndpoints()
+    public void Unregister()
     {
         if (OscManager.Instance == null)
             return;
-        OscManager.Instance.RemoveEndpoint($"{Address}/opacity");
-        OscManager.Instance.RemoveEndpoint($"{Address}/rotate");
-        OscManager.Instance.RemoveEndpoint($"{Address}/color");
+        OscManager.Instance.RemoveAllEndpointsForOwner(this);
+        // OscManager.Instance.RemoveEndpoint($"{Address}/opacity");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/rotate");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/color");
     }
 
     public void ResetToTransparent()
@@ -47,10 +48,10 @@ public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkC
         );
     }
 
-    public void RegisterEndpoints()
+    public void Register(string baseAddress)
     {
         OscManager.Instance.AddEndpoint(
-            $"{Address}/opacity",
+            $"{baseAddress}/color/opacity",
             (OscDataHandle dataHandle) =>
             {
                 var fade = dataHandle.GetElementAsFloat(0);
@@ -61,11 +62,12 @@ public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkC
                         motif.SetOpacity(fade);
                     }
                 );
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/opacityDelayed",
+            $"{baseAddress}/color/opacityDelayed",
             (OscDataHandle dataHandle) =>
             {
                 var fade = dataHandle.GetElementAsFloat(0);
@@ -75,11 +77,12 @@ public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkC
                         motif.SetOpacitySmooth(fade, normIndex);
                     }
                 );
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/rotate",
+            $"{baseAddress}/color/rotate",
             (OscDataHandle dataHandle) =>
             {
                 var value = dataHandle.GetElementAsFloat(0);
@@ -92,23 +95,26 @@ public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkC
                         motif.SetHueOffset(value + (normIndex * indexInfluence));
                     }
                 );
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/fadeIn",
+            $"{baseAddress}/color/fadeIn",
             (OscDataHandle dataHandle) =>
             {
                 FadeInEffect();
-            }
+            },
+            this
         );
 
         OscManager.Instance.AddEndpoint(
-            $"{Address}/fadeOut",
+            $"{baseAddress}/color/fadeOut",
             (OscDataHandle dataHandle) =>
             {
                 FadeOutEffect();
-            }
+            },
+            this
         );
     }
 

@@ -26,8 +26,13 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _Amplitude: 0.1
     - _Distance: 1
-    - _PointSize: 0.001
+    - _PointSize: 0.01
+    - _TimeFactor: 1
+    - _Wavyness: 0
     m_Colors:
+    - _PhaseOffset: {r: 0, g: 0, b: 0, a: 0}
     - _Tint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _XYZSpeed: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

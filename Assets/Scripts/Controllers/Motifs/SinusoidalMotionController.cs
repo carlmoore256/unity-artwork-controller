@@ -90,6 +90,172 @@ public class SinusoidalMotionController : MonoBehaviour, INetworkEndpoint
     private Dictionary<Moveable, TransformSnapshot> _targetSnapshots =
         new Dictionary<Moveable, TransformSnapshot>();
 
+    // private void OnEnable()
+    // {
+    //     RegisterEndpoints();
+    // }
+
+    public void Register(string baseAddress)
+    {
+        Debug.Log($"Registering SinusoidalMotionController at {baseAddress}");
+        Debug.Log($"{baseAddress}/motion/sinX");
+
+
+        OscManager.Instance.AddEndpoint("foo", (OscDataHandle dataHandle) => {
+            Debug.Log("foo");
+        }, this);
+
+        OscManager.Instance.AddEndpoint("bar", (OscDataHandle dataHandle) => {
+            Debug.Log("bar");
+        });
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/sinX",
+            (OscDataHandle dataHandle) =>
+            {
+                parameters.moveXAmp = dataHandle.GetElementAsFloat(0);
+                Debug.Log($"sinX {parameters.moveXAmp}");
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/cosY",
+            (OscDataHandle dataHandle) =>
+            {
+                parameters.moveYAmp = dataHandle.GetElementAsFloat(0);
+                Debug.Log($"cosY {parameters.moveYAmp}");
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/sinZ",
+            (OscDataHandle dataHandle) =>
+            {
+                parameters.moveZAmp = dataHandle.GetElementAsFloat(0);
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/speed",
+            (OscDataHandle dataHandle) =>
+            {
+                var speed = dataHandle.GetElementAsFloat(0);
+                parameters.moveXFreq = speed;
+                parameters.moveYFreq = speed;
+                parameters.moveZFreq = speed;
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/randProb",
+            (OscDataHandle dataHandle) =>
+            {
+                parameters.randProb = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f);
+                if (parameters.randProb < _minControlValue)
+                    parameters.enableRandomMotion = false;
+                else
+                    parameters.enableRandomMotion = true;
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/randDist",
+            (OscDataHandle dataHandle) =>
+            {
+                parameters.randDist = dataHandle.GetElementAsFloat(0);
+                if (parameters.randDist < _minControlValue)
+                    parameters.enableRandomMotion = false;
+                else
+                    parameters.enableRandomMotion = true;
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/lookAt",
+            (OscDataHandle dataHandle) =>
+            {
+                parameters.lookAtAmount = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f);
+                if (parameters.lookAtAmount < _minControlValue)
+                    parameters.enableLookAtTarget = false;
+                else
+                    parameters.enableLookAtTarget = true;
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/reset",
+            (OscDataHandle dataHandle) =>
+            {
+                Artwork.ForeachMoveable(
+                    (moveable) =>
+                    {
+                        moveable.ResetToDefault();
+                    }
+                );
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/lerpCenter",
+            (OscDataHandle dataHandle) =>
+            {
+                var allMoveables = Artwork.AllMoveables;
+                var center = allMoveables
+                    .Select(m => m.CurrentSnapshot.Position)
+                    .Aggregate((a, b) => a + b);
+                center /= allMoveables.Count();
+                float value = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0f, 1f);
+                foreach (var moveable in allMoveables)
+                {
+                    var newPos = Vector3.Lerp(moveable.CurrentSnapshot.Position, center, value);
+                    _targetSnapshots[moveable].Position = newPos;
+                }
+            },
+            this
+        );
+
+        OscManager.Instance.AddEndpoint(
+            $"{baseAddress}/motion/lerpReset",
+            (OscDataHandle dataHandle) =>
+            {
+                LerpReset(dataHandle.GetElementAsFloat(0));
+            },
+            this
+        );
+    }
+
+    public void Unregister()
+    {
+        if (OscManager.Instance == null)
+            return;
+        OscManager.Instance.RemoveAllEndpointsForOwner(this);
+        // OscManager.Instance.RemoveEndpoint($"{Address}/sinX");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/cosY");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/sinZ");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/speed");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/range");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/lookAtCamera");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/reset");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/lerpCenter");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/lerpReset");
+
+        // OscManager.Instance.RemoveEndpoint($"{Address}/randProbab");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/randDist");
+
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/lerpTarget");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableMotion");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtTarget");
+        // OscManager.Instance.RemoveEndpoint($"{OscAddress}/enableLookAtCamera");
+    }
+
     public void ApplyParameters(MotifMotionControllerParameters parameters)
     {
         if (

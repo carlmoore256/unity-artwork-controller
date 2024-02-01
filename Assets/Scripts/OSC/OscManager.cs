@@ -1,20 +1,25 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using OscJack;
-using System;
 using System.Linq;
+using OscJack;
+using UnityEngine;
 
 public class OscManager : MonoBehaviour
 {
     private static OscManager _instance;
-    public static OscManager Instance { get {
-        if (_instance == null) {
-            _instance = FindObjectOfType<OscManager>();
+    public static OscManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<OscManager>();
+            }
+            return _instance;
         }
-        return _instance;
-    } }
-     
+    }
+
     public ScriptableObject oscSettings;
 
     public static string RootAddress { get; } = "/unity";
@@ -22,12 +27,17 @@ public class OscManager : MonoBehaviour
     public int Port = 8000;
 
     private OscServer _server;
-    public OscServer Server { get {
-        if (_server == null) {
-            _server = new OscServer(Port);
+    public OscServer Server
+    {
+        get
+        {
+            if (_server == null)
+            {
+                _server = new OscServer(Port);
+            }
+            return _server;
         }
-        return _server;
-    } }
+    }
 
     private List<OscEndpoint> _endpoints = new List<OscEndpoint>();
 
@@ -52,8 +62,6 @@ public class OscManager : MonoBehaviour
         _endpoints = new List<OscEndpoint>();
     }
 
-
-
     public OscEndpoint AddEndpoint(string address)
     {
         var newEndpoint = new OscEndpoint(address, Server);
@@ -69,6 +77,14 @@ public class OscManager : MonoBehaviour
         return newEndpoint;
     }
 
+    public OscEndpoint AddEndpoint(string address, Action<OscDataHandle> listener, object owner)
+    {
+        var newEndpoint = new OscEndpoint(address, Server, owner);
+        newEndpoint.AddListener(listener);
+        _endpoints.Add(newEndpoint);
+        return newEndpoint;
+    }
+
     public void RemoveEndpoint(string address)
     {
         address = $"{RootAddress}{address}";
@@ -78,19 +94,49 @@ public class OscManager : MonoBehaviour
         {
             endpoint.Deactivate();
             _endpoints.Remove(endpoint);
-        } else {
+        }
+        else
+        {
             Debug.LogWarning($"No endpoint found at address {address}");
         }
+    }
+
+    public void RemoveEndpoint(OscEndpoint endpoint)
+    {
+        endpoint.Deactivate();
+        _endpoints.Remove(endpoint);
+    }
+
+    public void RemoveAllEndpointsForOwner(object owner)
+    {
+        // if (owner == null)
+        // {
+        //     Debug.LogWarning("Owner is null");
+        //     return;
+        // }
+        // var endpoints = _endpoints.Where(x => x.Owner == owner);
+        // if (endpoints.Count() == 0)
+        // {
+        //     Debug.LogWarning($"No endpoints found for owner {owner}");
+        //     return;
+        // }
+        // foreach (var endpoint in endpoints)
+        // {
+        //     RemoveEndpoint(endpoint);
+        // }
     }
 
     // option to add an endpoint that is unaffected by the subscriber system
     public void AddStaticEndpoint(string address, Action<OscDataHandle> listener)
     {
-        Server.MessageDispatcher.AddCallback($"{RootAddress}{address}", (string msgAddress, OscDataHandle data) => {
-            listener?.Invoke(data);
-        });
+        Server.MessageDispatcher.AddCallback(
+            $"{RootAddress}{address}",
+            (string msgAddress, OscDataHandle data) =>
+            {
+                listener?.Invoke(data);
+            }
+        );
     }
-
 
     private void OnApplicationQuit()
     {
@@ -102,8 +148,10 @@ public class OscManager : MonoBehaviour
         DisposeServer();
     }
 
-    private void DisposeServer() { _server?.Dispose(); }
-
+    private void DisposeServer()
+    {
+        _server?.Dispose();
+    }
 
     // void Update()
     // {

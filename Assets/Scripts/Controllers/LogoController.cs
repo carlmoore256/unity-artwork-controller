@@ -39,72 +39,73 @@ public class LogoController : MonoBehaviour, INetworkEndpoint
         }
 
 
-        RegisterEndpoints();
+        Register("/logo");
     }
 
 
     void OnDisable()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
     void OnDestroy()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
-    public void RegisterEndpoints()
+    public void Register(string baseAddress)
     {
-        OscManager.Instance.AddEndpoint($"{Address}/enableLogo", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/enableLogo", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsString(0);
             Debug.Log($"Enable Logo {value}");
             EnableLogo(value);
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/disableLogo", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/disableLogo", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsString(0);
             Debug.Log($"Disable Logo {value}");
             DisableLogo(value);
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/toggleLogo", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/toggleLogo", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsString(0);
             Debug.Log($"Toggle Logo {value}");
             ToggleLogo(value);
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/rotateSpeed", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/rotateSpeed", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsFloat(0);
             Debug.Log($"Rotate Speed {value}");
             if (_activeLogo != null) {
                 _activeLogo.RotationSpeed = value;
             }
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/scale", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/scale", (OscDataHandle dataHandle) => {
             var value = Mathf.Clamp(dataHandle.GetElementAsFloat(0), 0.1f, 3f);
             Debug.Log($"Scale {value}");
             if (_activeLogo != null) {
                 // _activeLogo.Scale = value;
                 _activeLogo.ScaleTo(value);
             }
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/reset", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/reset", (OscDataHandle dataHandle) => {
             var value = dataHandle.GetElementAsFloat(0);
             Debug.Log($"Reset {value}");
             if (_activeLogo != null) {
                 _activeLogo.Reset();
             }
-        });
+        }, this);
     }
 
-    public void UnregisterEndpoints()
+    public void Unregister()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{Address}/enableLogo");
-        OscManager.Instance.RemoveEndpoint($"{Address}/disableLogo");
-        OscManager.Instance.RemoveEndpoint($"{Address}/toggleLogo");
+        OscManager.Instance.RemoveAllEndpointsForOwner(this);
+        // OscManager.Instance.RemoveEndpoint($"{Address}/enableLogo");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/disableLogo");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/toggleLogo");
     }
 
     private void EnableLogo(string id)

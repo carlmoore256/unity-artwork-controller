@@ -1,28 +1,39 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using OscJack;
-using System;
-
+using UnityEngine;
 
 public class OscEndpoint
 {
     private readonly string _address;
     public string Address => _address;
-    private List<Action<OscDataHandle>> _listeners = new List<Action<OscDataHandle>>();    
+    public object Owner => _owner;
+    private List<Action<OscDataHandle>> _listeners = new List<Action<OscDataHandle>>();
     private readonly OscServer _server;
-
+    private object _owner;
 
     public OscEndpoint(string address, OscServer server)
     {
+        if (!address.StartsWith("/"))
+        {
+            address = $"/{address}";
+        }
         _address = $"{OscManager.RootAddress}{address}";
         _server = server;
         _server.MessageDispatcher.AddCallback(_address, NotifyListeners);
     }
 
+    public OscEndpoint(string address, OscServer server, object owner)
+        : this(address, server)
+    {
+        _owner = owner;
+    }
+
     public void Deactivate()
     {
-        if (_server != null && _server.MessageDispatcher != null) {
+        if (_server != null && _server.MessageDispatcher != null)
+        {
             _server.MessageDispatcher.RemoveCallback(_address, NotifyListeners);
         }
     }
@@ -37,12 +48,12 @@ public class OscEndpoint
         _listeners.Remove(listener);
     }
 
-
     private void NotifyListeners(string address, OscDataHandle data)
     {
         foreach (var listener in _listeners)
         {
-            Dispatcher.RunOnMainThread(() => {
+            Dispatcher.RunOnMainThread(() =>
+            {
                 listener?.Invoke(data);
             });
         }

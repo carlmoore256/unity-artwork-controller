@@ -18,38 +18,38 @@ public class PostProcessingController : MonoBehaviour, INetworkEndpoint
 
     private void OnEnable()
     {
-        RegisterEndpoints();
+        Register("/camera");
     }
 
     private void OnDisable()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
     private void OnDestroy()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
     
 
-    public void RegisterEndpoints()
+    public void Register(string baseAddress)
     {
-        OscManager.Instance.AddEndpoint(Address + "/kaleidoscope/toggle", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint(baseAddress + "/kaleidoscope/toggle", (OscDataHandle dataHandle) => {
             var kaleidoscope = GetComponent<KaleidoscopeEffect>();
             ToggleICameraEffect(kaleidoscope);
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint(Address + "/echo/toggle", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint(baseAddress + "/echo/toggle", (OscDataHandle dataHandle) => {
             var echo = GetComponent<EchoEffect>();
             ToggleICameraEffect(echo);
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint(Address + "/kaliedoscope/intensity", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint(baseAddress + "/kaliedoscope/intensity", (OscDataHandle dataHandle) => {
             var kaleidoscope = GetComponent<KaleidoscopeEffect>();
             SetIntensity(kaleidoscope, dataHandle.GetElementAsFloat(0));
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/kaliedoscope/reflections", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/kaliedoscope/reflections", (OscDataHandle dataHandle) => {
             var kaleidoscope = GetComponent<KaleidoscopeEffect>();
             // var value = Mathf.Clamp(dataHandle.GetElementAsInt(0), 4, 20);
             var value = dataHandle.GetElementAsFloat(0);
@@ -57,13 +57,13 @@ public class PostProcessingController : MonoBehaviour, INetworkEndpoint
             value *= 20-4;
             value += 4;
             kaleidoscope.reflections = (int)value;
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/kaliedoscope/stretch", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/kaliedoscope/stretch", (OscDataHandle dataHandle) => {
             var kaleidoscope = GetComponent<KaleidoscopeEffect>();
             var value = Mathf.Clamp(dataHandle.GetElementAsFloat(0), -20f, 20f);
             kaleidoscope.stretch = value;
-        });
+        }, this);
 
         // rotation would be cool
         // OscManager.Instance.AddEndpoint($"{OscAddress}/kaliedoscope/rotation", (OscDataHandle dataHandle) => {
@@ -71,19 +71,19 @@ public class PostProcessingController : MonoBehaviour, INetworkEndpoint
         //     kaleidoscope.rotation = dataHandle.GetElementAsFloat(0);
         // });
 
-        OscManager.Instance.AddEndpoint(Address + "/echo/intensity", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint(baseAddress + "/echo/intensity", (OscDataHandle dataHandle) => {
             var echo = GetComponent<EchoEffect>();
             SetIntensity(echo, dataHandle.GetElementAsFloat(0));
-        });
+        }, this);
 
 
-        OscManager.Instance.AddEndpoint($"{Address}/echo/feedback", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/echo/feedback", (OscDataHandle dataHandle) => {
             var echo = GetComponent<EchoEffect>();
             var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
             echo.echoIntensity = value;
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/bloom/intensity", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/bloom/intensity", (OscDataHandle dataHandle) => {
             var bloom = _postProcessProfile.GetSetting<Bloom>();
             var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
             if (value < _minMIDIValue) {
@@ -92,21 +92,21 @@ public class PostProcessingController : MonoBehaviour, INetworkEndpoint
                 bloom.active = true;
             }
             bloom.intensity.value = value;
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/bloom/threshold", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/bloom/threshold", (OscDataHandle dataHandle) => {
             var bloom = _postProcessProfile.GetSetting<Bloom>();
             var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
             bloom.threshold.value = value;
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/bloom/softKnee", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/bloom/softKnee", (OscDataHandle dataHandle) => {
             var bloom = _postProcessProfile.GetSetting<Bloom>();
             var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
             bloom.softKnee.value = value;
-        });
+        }, this);
 
-        OscManager.Instance.AddEndpoint($"{Address}/abberation/intensity", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/abberation/intensity", (OscDataHandle dataHandle) => {
             var abberation = _postProcessProfile.GetSetting<ChromaticAberration>();
             var value = Mathf.Clamp01(dataHandle.GetElementAsFloat(0));
             if (value < _minMIDIValue) {
@@ -115,7 +115,7 @@ public class PostProcessingController : MonoBehaviour, INetworkEndpoint
                 abberation.active = true;
             }
             abberation.intensity.value = value;
-        });
+        }, this);
 
 
         /// GOOD IDEA - make a fade to black screen so that if everything goes wrong, we can easily fade to black,
@@ -125,14 +125,15 @@ public class PostProcessingController : MonoBehaviour, INetworkEndpoint
         // });
     }
 
-    public void UnregisterEndpoints()
+    public void Unregister()
     {
         if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint(Address + "/kaleidoscope/toggle");
-        OscManager.Instance.RemoveEndpoint(Address + "/echo/toggle");
-        OscManager.Instance.RemoveEndpoint(Address + "/kaliedoscope/intensity");
-        OscManager.Instance.RemoveEndpoint(Address + "/echo/intensity");
-        OscManager.Instance.RemoveEndpoint(Address + "/echo/feedback");
+        OscManager.Instance.RemoveAllEndpointsForOwner(this);
+        // OscManager.Instance.RemoveEndpoint(Address + "/kaleidoscope/toggle");
+        // OscManager.Instance.RemoveEndpoint(Address + "/echo/toggle");
+        // OscManager.Instance.RemoveEndpoint(Address + "/kaliedoscope/intensity");
+        // OscManager.Instance.RemoveEndpoint(Address + "/echo/intensity");
+        // OscManager.Instance.RemoveEndpoint(Address + "/echo/feedback");
     }
 
     private void SetIntensity(ICameraEffect effect, float value)

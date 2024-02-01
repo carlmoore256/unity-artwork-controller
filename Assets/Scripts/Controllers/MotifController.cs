@@ -8,7 +8,7 @@ using OscJack;
 public class MotifController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
     public Artwork Artwork => GetComponent<Artwork>();
-    public string Address => $"artwork/{Artwork.Id}/motif";
+    public string Address => $"/motif";
 
     [SerializeField] private GameObject _background;
 
@@ -23,33 +23,34 @@ public class MotifController : MonoBehaviour, INetworkEndpoint, IArtworkControll
         }
     }
 
-    void OnEnable()
-    {
-        RegisterEndpoints();
-    }
+    // void OnEnable()
+    // {
+    //     Register();
+    // }
 
     void OnDisable()
     {
-        OscManager.Instance.RemoveEndpoint($"{Address}/bgFade");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/bgFade");
     }
 
     void OnDestroy()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
 
-    public void RegisterEndpoints()
+    public void Register(string baseAddress)
     {
-        OscManager.Instance.AddEndpoint($"{Address}/bgFade", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddEndpoint($"{baseAddress}/motif/bgFade", (OscDataHandle dataHandle) => {
             var fade = dataHandle.GetElementAsFloat(0);
             // Artwork.BackgroundFade(fade);
-        });
+        }, this);
     }
 
-    public void UnregisterEndpoints()
+    public void Unregister()
     {
-        OscManager.Instance.RemoveEndpoint($"{Address}/bgFade");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/bgFade");
+        OscManager.Instance.RemoveAllEndpointsForOwner(this);
     }
 
 

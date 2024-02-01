@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-
 // we make a router object, that can route to additional places
 
 // maybe the artwork itself is an endpoint
@@ -18,7 +17,8 @@ public class Artwork
         IComponentIterator,
         IMaskLayerIterator,
         IMovableIterator,
-        IMotifIterator
+        IMotifIterator,
+        INetworkEndpoint
 {
     [SerializeField]
     private int _index;
@@ -27,6 +27,8 @@ public class Artwork
         get => _index;
         set => _index = value;
     }
+
+    public string Address => $"/artwork/{Id}";
 
     public string Id => gameObject.name.Split("Artwork__")[1];
 
@@ -64,6 +66,30 @@ public class Artwork
         var colorController = GetComponent<ArtworkColorController>();
         colorController.ResetToTransparent();
         colorController.FadeInEffect();
+
+        Register($"artwork/{Id}");
+    }
+
+
+    private IEnumerable<INetworkEndpoint> GetEndpoints()
+    {
+        return GetComponents<INetworkEndpoint>().Where(e => (object)e != this);
+    }
+
+    public void Register(string baseAddress)
+    {
+        foreach (var endpoint in GetEndpoints())
+        {
+            Debug.Log($"Registering endpoint {endpoint.Address}");
+            endpoint.Register(baseAddress);
+        }
+    }
+
+    public void Unregister() { 
+        foreach (var endpoint in GetEndpoints())
+        {
+            endpoint.Unregister();
+        }
     }
 
     public void RemoveFromScene(Action onComplete = null)
@@ -332,7 +358,7 @@ public class Artwork
     {
         // instead of this, we should just get all objects that have a type of controller
         // these are essentially things that just expose an endpoint
-    
+
         // add all the monobehaviours
         if (gameObject.GetComponent<PolyphonicMidiController>() == null)
             gameObject.AddComponent<PolyphonicMidiController>();

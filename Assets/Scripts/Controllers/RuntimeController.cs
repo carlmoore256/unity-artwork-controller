@@ -14,36 +14,36 @@ public class RuntimeController : MonoBehaviour, INetworkEndpoint
 
     private void OnEnable()
     {
-        RegisterEndpoints();
+        Register("/runtime");
     }
 
     private void OnDisable()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
     private void OnDestroy()
     {
-        UnregisterEndpoints();
+        Unregister();
     }
 
-    public void RegisterEndpoints()
+    public void Register(string baseAddress)
     {
         // OscManager.Instance.AddEndpoint($"{OscAddress}/quit", (OscDataHandle dataHandle) => {
         //     Debug.Log("Quitting");
         //     // Application.Quit();
         // });
 
-        OscManager.Instance.AddStaticEndpoint($"{Address}/reload", (OscDataHandle dataHandle) => {
+        OscManager.Instance.AddStaticEndpoint($"{baseAddress}/reload", (OscDataHandle dataHandle) => {
             _reset = true;
         });
     }
 
-    public void UnregisterEndpoints()
+    public void Unregister()
     {
-        if (OscManager.Instance == null) return;
-        OscManager.Instance.RemoveEndpoint($"{Address}/quit");
-        OscManager.Instance.RemoveEndpoint($"{Address}/reload");
+        // if (OscManager.Instance == null) return;
+        // OscManager.Instance.RemoveEndpoint($"{Address}/quit");
+        // OscManager.Instance.RemoveEndpoint($"{Address}/reload");
     }
 
     // Update is called once per frame

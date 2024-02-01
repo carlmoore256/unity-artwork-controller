@@ -55,7 +55,7 @@ public class CameraController : MonoBehaviour, INetworkEndpoint
 
     private void OnEnable()
     {
-        RegisterEndpoints();
+        Register("/camera");
 
         _rigidbody = GetComponent<Rigidbody>();
         _playerInputActions = new PlayerInputActions();
@@ -72,10 +72,10 @@ public class CameraController : MonoBehaviour, INetworkEndpoint
 
     private Coroutine _resetCameraCoroutine;
 
-    public void RegisterEndpoints()
+    public void Register(string baseAddress)
     {
         OscManager.Instance.AddEndpoint(
-            "/camera/reset",
+            $"{baseAddress}/reset",
             (OscDataHandle oscDataHandle) =>
             {
                 Debug.Log("Resetting camera");
@@ -84,7 +84,8 @@ public class CameraController : MonoBehaviour, INetworkEndpoint
                     StopCoroutine(_resetCameraCoroutine);
                 }
                 _resetCameraCoroutine = StartCoroutine(LerpCameraToDefault());
-            }
+            },
+            this
         );
     }
 
@@ -92,7 +93,8 @@ public class CameraController : MonoBehaviour, INetworkEndpoint
     {
         if (OscManager.Instance != null)
             // OscManager.Instance.RemoveEndpoint
-            OscManager.Instance.RemoveEndpoint("/camera/reset");
+            // OscManager.Instance.RemoveEndpoint("/camera/reset");
+            OscManager.Instance.RemoveAllEndpointsForOwner(this);
 
         _playerInputActions.Camera.Disable();
         _playerInputActions.Camera.Translate.performed -= OnTranslate;
@@ -258,7 +260,7 @@ public class CameraController : MonoBehaviour, INetworkEndpoint
         transform.Rotate(rotation * _rotateSpeed * Time.deltaTime);
     }
 
-    public void UnregisterEndpoints() { }
+    public void Unregister() { }
 
     private void ResetCamera(InputAction.CallbackContext ctx)
     {
