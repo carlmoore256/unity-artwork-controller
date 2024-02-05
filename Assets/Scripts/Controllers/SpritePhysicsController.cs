@@ -10,7 +10,7 @@ public class SpritePhysicsController : MonoBehaviour, INetworkEndpoint, IArtwork
     public bool PhysicsEnabled = false;
     public bool GravityEnabled = false;
 
-    public Artwork Artwork => GetComponent<Artwork>();
+    public SegmentedPaintingArtwork Artwork => GetComponent<SegmentedPaintingArtwork>();
     public string Address => $"/artwork/{Artwork.Id}/physics";
 
     [SerializeField]

@@ -1,8 +1,15 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 using WebSocketSharp;
 using WebSocketSharp.Server;
+
+public interface IWebSocketSendMessageData<T>
+{
+    T Value { get; }
+    string Type { get; }
+}
 
 public class WebSocketHost : MonoBehaviour
 {
@@ -10,13 +17,81 @@ public class WebSocketHost : MonoBehaviour
     public int port = 8080;
     private WebSocketServer wss;
 
+    public Action<string> OnClientConnected;
+    public Action<WebSocketReceiveMessageData> OnMessageReceived;
+    private Dictionary<string, Action<WebSocketReceiveMessageData>> _listeners = new Dictionary<string, Action<WebSocketReceiveMessageData>>();
+
+    public string Endpoint { get; } = "/Unity";
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void Initialize()
+    {
+        if (Instance == null)
+        {
+            Instance = new GameObject("WebSocketHost").AddComponent<WebSocketHost>();
+            DontDestroyOnLoad(Instance.gameObject);
+        }
+    }
+
+    public void AddListener(string messageType, Action<WebSocketReceiveMessageData> listener)
+    {
+        if (_listeners.ContainsKey(messageType))
+        {
+            _listeners[messageType] += listener;
+            return;
+        } else {
+            _listeners[messageType] = listener;
+        }
+    }
+
+    public void RemoveListener(string messageType, Action<WebSocketReceiveMessageData> listener)
+    {
+        if (_listeners.ContainsKey(messageType))
+        {
+            _listeners[messageType] -= listener;
+        }
+    }
+
     void Start()
     {
         wss = new WebSocketServer(port);
-        wss.AddWebSocketService<WebSocketEndpoint>("/Unity");
+        wss.AddWebSocketService<WebSocketEndpoint>(Endpoint);
         wss.Start();
         Debug.Log("WebSocket Server started on ws://localhost:8080/Unity");
         Instance = this;
+        // wss.WebSocketServices[Endpoint]
+        //  += (sender, e) => OnOpen();
+    }
+
+    public void ClientConnected(string clientId)
+    {
+        Dispatcher.RunOnMainThread(() =>
+        {
+            OnClientConnected?.Invoke(clientId);
+        });
+    }
+
+    public void ClientDisconnected(string clientId)
+    {
+        Dispatcher.RunOnMainThread(() =>
+        {
+            // Handle client disconnection
+            Debug.Log("Client disconnected: " + clientId);
+        });
+    }
+
+    public void ClientMessageReceived(string clientId, string message)
+    {
+        Dispatcher.RunOnMainThread(() =>
+        {
+            // Debug.Log("Client message received: " + message);
+            // Handle client message
+            var messageData = WebSocketReceiveMessageData.ParseMessage(message);
+            if (_listeners.ContainsKey(messageData.messageType))
+            {
+                _listeners[messageData.messageType]?.Invoke(messageData);
+            }
+        });
     }
 
     void OnDestroy()
@@ -28,7 +103,10 @@ public class WebSocketHost : MonoBehaviour
         }
     }
 
-    public void RegisterEndpoint(string address, Action<WebSocketMessageData> onMessageReceived)
+    public void RegisterEndpoint(
+        string address,
+        Action<__WebSocketReceiveMessageData> onMessageReceived
+    )
     {
         // var service = wss.WebSocketServices["/Unity"];
         // var webSocketService = (WebSocketService)service;
@@ -39,14 +117,21 @@ public class WebSocketHost : MonoBehaviour
     {
         wss.RemoveWebSocketService(address);
     }
-    
 
-    void Update()
+    public void Broadcast(string message)
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            wss.WebSocketServices["/Unity"].Sessions.Broadcast($"Hello from Unity!");
-        }
+        wss.WebSocketServices[Endpoint].Sessions.Broadcast(message);
+    }
+
+    public void Broadcast(object data)
+    {
+        string json = JsonConvert.SerializeObject(data);
+        wss.WebSocketServices[Endpoint].Sessions.Broadcast(json);
+    }
+
+    public void Broadcast(WebSocketSendMessageData data)
+    {
+        wss.WebSocketServices[Endpoint].Sessions.Broadcast(data.ToJson());
     }
 }
 
@@ -64,10 +149,10 @@ public class WebSocketHost : MonoBehaviour
 // there should be a specific endpoint that lets the client know of new things
 // added to the endpoints
 
-// if /endpoints gave a list of objects, that all contained metadata about the 
+// if /endpoints gave a list of objects, that all contained metadata about the
 // endpoint, that would be good. Remember we need to think about a parent containing
 // a set of endpoints. That parent has some properties. For instance, an artwork
-// has a name, photo, and status of whether it is active or not. Well, maybe not the 
+// has a name, photo, and status of whether it is active or not. Well, maybe not the
 // status. The global artwork controller could be in charge of sending info about
 // what's available as endpoint metadata.
 
@@ -75,21 +160,17 @@ public class WebSocketEndpoint : WebSocketBehavior
 {
     protected override void OnMessage(MessageEventArgs e)
     {
-        Debug.Log("Received message from client: " + e.Data);
-        Send("Echo: " + e.Data);
+        WebSocketHost.Instance.ClientMessageReceived(ID, e.Data);
     }
 
     protected override void OnOpen()
     {
-        // on open will be where we send the client the configuration
-        // options
-        Debug.Log("Client connected: " + ID);
+        WebSocketHost.Instance.ClientConnected(ID);
     }
 
     protected override void OnClose(CloseEventArgs e)
     {
-        Send("Goodbye");
-        Debug.Log("Client disconnected: " + ID);
+        WebSocketHost.Instance.ClientDisconnected(ID);
     }
 
     public void SendMessageToClient(string message)

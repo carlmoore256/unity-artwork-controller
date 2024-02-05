@@ -1,3 +1,4 @@
+
 // abstract away the idea of controlling a set of controllers from an artwork
 // maybe the controllers plug into the artwork
 
@@ -12,16 +13,34 @@ public abstract class Plugin {
 
 }
 
+public struct ArtworkMetadata
+{
+    public string id;
+    public string name;
+    public string ToJson()
+    {
+        return "";
+        // return JsonConvert.SerializeObject(this);
+    }
+
+}
+
+
+// in IArtwork, we should define a way for other classes to get
+// what types of iterators and such are available
+
 public interface IArtwork
 {
+    string Id { get; }
     string Name { get; }
-    object GetParameters();
 
-    void AddPlugin(Plugin plugin);
+    // object GetParameters();
+    // void AddPlugin(Plugin plugin);
 
+    ArtworkMetadata GetMetadata();
 
     // have something to set the commands?
 
-    void ExecuteEffect(); // we could pass in a generic effect which 
+    // void ExecuteEffect(); // we could pass in a generic effect which 
     // is a command object
 }

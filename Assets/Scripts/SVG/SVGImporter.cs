@@ -157,9 +157,9 @@ public class SVGImporter : MonoBehaviour
         Transform artworkContainer = new GameObject(_controllerPrefix + svgName).transform;
         artworkContainer.SetParent(transform);
         artworkContainer.transform.localPosition = Vector3.zero;
-        artworkContainer.gameObject.AddComponent<Artwork>();
+        artworkContainer.gameObject.AddComponent<SegmentedPaintingArtwork>();
 
-        Artwork artwork = artworkContainer.GetComponent<Artwork>();
+        SegmentedPaintingArtwork artwork = artworkContainer.GetComponent<SegmentedPaintingArtwork>();
         artwork.AddArtworkControllers();
         // AddArtworkControllers(artwork);
 

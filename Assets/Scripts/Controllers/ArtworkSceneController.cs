@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,27 +10,27 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
 {
     public string Address => "/scene";
 
+    public Action<ArtworkMetadata> OnArtworkEnabled;
+    public Action<ArtworkMetadata> OnArtworkDisabled;
+
+    // public GameObject[] ArtworkPrefabs
+    // {
+    //     get { return _artworkPrefabs; }
+    // }
+
     [SerializeField]
     private int _maxDisabledArtworks = 3;
     private int _currentlySelectedArtworkIndex = 0;
-    public Artwork[] ActiveArtworks => gameObject.GetComponentsInChildren<Artwork>();
+    public SegmentedPaintingArtwork[] ActiveArtworks => gameObject.GetComponentsInChildren<SegmentedPaintingArtwork>();
 
-    [SerializeField]
-    private GameObject[] _artworkPrefabs;
+    // [SerializeField]
+    // private GameObject[] _artworkPrefabs;
     private GameObject[] _activeArtworks;
     public string ResourcePath = "Artworks";
     private readonly string _artworkNamePrefix = "Artwork__";
 
     // private EndpointHandler _endpointHandler;
 
-    void Start()
-    {
-        _artworkPrefabs = Resources.LoadAll<GameObject>(ResourcePath);
-        if (_artworkPrefabs.Length == 0)
-        {
-            throw new System.Exception($"No Artwork Prefabs found in Resources/{ResourcePath}");
-        }
-    }
 
     // what if there was an IParameterizedController interface?
     // that exposed a list of all the parameters
@@ -133,24 +134,23 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
     }
 
     // [NetworkEndpoint("/enableArtwork")]
-    private void EnableArtworkById(string id)
+    public void EnableArtworkById(string id)
     {
         string artworkName = $"{_artworkNamePrefix}{id}";
         Debug.Log($"Attempting to enable Artwork {id}");
 
         // find any existing gameobjects with the same name
-
         // var artwork = ActiveArtworks.Find(x => x.Id == id);
-        var artwork = ActiveArtworks.FirstOrDefault(x => x.gameObject.name == artworkName);
-        Debug.Log($"Artwork {artworkName} {artwork}");
-        if (artwork != null)
+        var activeArtwork = ActiveArtworks.FirstOrDefault(x => x.gameObject.name == artworkName);
+
+        if (activeArtwork != null)
         {
             Debug.Log($"Artwork {id} already active");
-            artwork.CancelDestroy();
+            activeArtwork.CancelDestroy();
             return;
         }
 
-        var artworkPrefab = _artworkPrefabs.FirstOrDefault(x => x.GetComponent<Artwork>().Id == id);
+        var artworkPrefab = ArtworkLoader.Instance.GetArtworkPrefab(id);
         if (artworkPrefab == null)
         {
             Debug.Log($"Artwork {id} not found");
@@ -159,6 +159,7 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
 
         var newArtwork = Instantiate(artworkPrefab, Vector3.zero, Quaternion.identity);
         newArtwork.transform.parent = transform;
+        OnArtworkEnabled?.Invoke(newArtwork.GetComponent<SegmentedPaintingArtwork>().GetMetadata());
     }
 
     private void DisableArtworkById(string id)
@@ -167,10 +168,16 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
         if (artwork == null)
             return;
         Debug.Log($"Disabling Artwork {artwork.gameObject.name}");
-        artwork.RemoveFromScene();
+        var info = artwork.GetMetadata();
+        artwork.RemoveFromScene(() => OnArtworkDisabled?.Invoke(info));
     }
 
-    private void ToggleArtworkById(string id)
+    public void ToggleArtwork(IArtwork artwork)
+    {
+        ToggleArtworkById(artwork.Id);
+    }
+
+    public void ToggleArtworkById(string id)
     {
         var artwork = ActiveArtworks.FirstOrDefault(x => x.Id == id);
         if (artwork == null)
@@ -203,7 +210,8 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
 
         if (artwork.gameObject.activeSelf)
         {
-            StartCoroutine(ToggleOffArtwork(artwork));
+            artwork.RemoveFromScene();
+            // StartCoroutine(ToggleOffArtwork(artwork));
         }
         else
         {
@@ -213,7 +221,7 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
         }
     }
 
-    private IEnumerator ToggleOffArtwork(Artwork artwork)
+    private IEnumerator ToggleOffArtwork(SegmentedPaintingArtwork artwork)
     {
         artwork.GetComponent<ArtworkColorController>().FadeOutEffect(0, 3);
         yield return new WaitForSeconds(3.3f);

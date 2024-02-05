@@ -18,5 +18,5 @@ public interface INetworkEndpoint
 
 public interface IArtworkController
 {
-    Artwork Artwork { get; }
+    SegmentedPaintingArtwork Artwork { get; }
 }

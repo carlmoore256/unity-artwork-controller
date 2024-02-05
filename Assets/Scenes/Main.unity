@@ -526,17 +526,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 912300664}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cce6290e543a6df419cbf7c34619b3b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DefaultPosition: {x: 0, y: 0, z: 0}
-  DefaultRotation: {x: 0, y: 0, z: 0, w: 0}
-  DefaultScale: {x: 0, y: 0, z: 0}
-  MoveDuration: 0.5
-  DefaultDuration: 0.6
-  UseLocal: 1
+  TweenDuration: 0.1
 --- !u!54 &912300672
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -796,6 +791,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2092369824}
   - component: {fileID: 2092369825}
+  - component: {fileID: 2092369826}
   m_Layer: 0
   m_Name: ArtworkSceneController
   m_TagString: Untagged
@@ -831,7 +827,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _maxDisabledArtworks: 3
+  _artworkPrefabs: []
   ResourcePath: Artworks
+--- !u!114 &2092369826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2092369822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6523c8162c7d94637bf95da5694d6e68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &832429362574196566
 PrefabInstance:
   m_ObjectHideFlags: 0

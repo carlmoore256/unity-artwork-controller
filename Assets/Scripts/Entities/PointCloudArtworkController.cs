@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 
 [RequireComponent(typeof(ArtworkColorController))]
-public class PointCloudArtworkController : Artwork
+public class PointCloudArtworkController : SegmentedPaintingArtwork
 {
     [SerializeField] private int _index;
 

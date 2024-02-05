@@ -7,7 +7,7 @@ using OscJack;
 // CONSIDER REMOVING! ARTWORK TAKES CARE OF THIS
 public class MotifController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
-    public Artwork Artwork => GetComponent<Artwork>();
+    public SegmentedPaintingArtwork Artwork => GetComponent<SegmentedPaintingArtwork>();
     public string Address => $"/motif";
 
     [SerializeField] private GameObject _background;

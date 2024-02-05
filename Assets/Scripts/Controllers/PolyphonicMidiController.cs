@@ -10,7 +10,7 @@ public class PolyphonicMidiController : MonoBehaviour, INetworkEndpoint, IArtwor
     Dictionary<int, float> _activeNotes = new Dictionary<int, float>();
     private Dictionary<int, Action<int, float>> _noteOnActions = new Dictionary<int, Action<int, float>>();
 
-    public Artwork Artwork => GetComponent<Artwork>();
+    public SegmentedPaintingArtwork Artwork => GetComponent<SegmentedPaintingArtwork>();
     public string Address => $"/artwork/{Artwork.Id}/midi";
 
     [SerializeField] private float _scaleAmount = 5f;

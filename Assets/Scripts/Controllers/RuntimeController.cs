@@ -29,11 +29,6 @@ public class RuntimeController : MonoBehaviour, INetworkEndpoint
 
     public void Register(string baseAddress)
     {
-        // OscManager.Instance.AddEndpoint($"{OscAddress}/quit", (OscDataHandle dataHandle) => {
-        //     Debug.Log("Quitting");
-        //     // Application.Quit();
-        // });
-
         OscManager.Instance.AddStaticEndpoint($"{baseAddress}/reload", (OscDataHandle dataHandle) => {
             _reset = true;
         });

@@ -13,7 +13,7 @@ public class LineTrailController : MonoBehaviour, INetworkEndpoint, IArtworkCont
     private List<LineTrail> _lineTrails = new List<LineTrail>();
     private Material _lineMaterial;
 
-    public Artwork Artwork => GetComponent<Artwork>();
+    public SegmentedPaintingArtwork Artwork => GetComponent<SegmentedPaintingArtwork>();
     public string Address => $"/line";
 
 

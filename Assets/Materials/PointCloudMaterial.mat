@@ -88,7 +88,7 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _Amplitude: -54.9
+    - _Amplitude: -40.47
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
@@ -109,7 +109,7 @@ Material:
     - _NoiseScale: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
-    - _PointSize: 0.05
+    - _PointSize: 0.1
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _Smoothness: 0.5
@@ -118,8 +118,8 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _TimeFactor: 0.0001
-    - _Wavyness: -19.1
+    - _TimeFactor: 0.001
+    - _Wavyness: 8.68
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:

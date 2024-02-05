@@ -36,7 +36,7 @@ public class EndpointHandler
         return $"/{address}";
     }
 
-    public void RegisterEndpoint(string address, Action<WebSocketMessageData> onMessageReceived)
+    public void RegisterEndpoint(string address, Action<__WebSocketReceiveMessageData> onMessageReceived)
     {
         address = ResolveAddress(address);
         if (_registeredEndpoints.Contains(address))
@@ -60,9 +60,9 @@ public class EndpointHandler
                 method.GetCustomAttributes(typeof(NetworkEndpointAttribute), false).First();
             var address = ResolveAddress(attribute.Address);
             var action =
-                (Action<WebSocketMessageData>)
+                (Action<__WebSocketReceiveMessageData>)
                     Delegate.CreateDelegate(
-                        typeof(Action<WebSocketMessageData>),
+                        typeof(Action<__WebSocketReceiveMessageData>),
                         controller,
                         method
                     );

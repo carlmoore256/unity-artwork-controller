@@ -5,7 +5,7 @@ using UnityEngine;
 // [RequireComponent(typeof(Moveable))]
 public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
-    public Artwork Artwork => GetComponent<Artwork>();
+    public SegmentedPaintingArtwork Artwork => GetComponent<SegmentedPaintingArtwork>();
     public string Address => $"/color";
 
     // void Start()
@@ -19,11 +19,6 @@ public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkC
     }
 
     void OnDisable()
-    {
-        Unregister();
-    }
-
-    void OnDestroy()
     {
         Unregister();
     }

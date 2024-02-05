@@ -99,6 +99,7 @@ public class OscManager : MonoBehaviour
         {
             Debug.LogWarning($"No endpoint found at address {address}");
         }
+
     }
 
     public void RemoveEndpoint(OscEndpoint endpoint)
@@ -109,21 +110,25 @@ public class OscManager : MonoBehaviour
 
     public void RemoveAllEndpointsForOwner(object owner)
     {
-        // if (owner == null)
-        // {
-        //     Debug.LogWarning("Owner is null");
-        //     return;
-        // }
-        // var endpoints = _endpoints.Where(x => x.Owner == owner);
-        // if (endpoints.Count() == 0)
-        // {
-        //     Debug.LogWarning($"No endpoints found for owner {owner}");
-        //     return;
-        // }
-        // foreach (var endpoint in endpoints)
-        // {
-        //     RemoveEndpoint(endpoint);
-        // }
+        Debug.Log($"Removing all endpoints for owner {owner}");
+        if (owner == null)
+        {
+            Debug.LogWarning("Owner is null");
+            return;
+        }
+        var endpoints = _endpoints.Where(x => x.Owner == owner).ToArray();
+        if (endpoints.Length == 0)
+        {
+            Debug.LogWarning($"No endpoints found for owner {owner}");
+            return;
+        }
+
+        foreach (var endpoint in endpoints)
+        {
+            RemoveEndpoint(endpoint);
+        }
+
+        Debug.Log($"Endpoints Remaining: {_endpoints.Count}");
     }
 
     // option to add an endpoint that is unaffected by the subscriber system
