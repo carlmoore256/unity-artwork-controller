@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1096075284004381920
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1659529222080570462}
+  - component: {fileID: 5738179364192041738}
+  m_Layer: 0
+  m_Name: Mesh-Group-Importer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1659529222080570462
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096075284004381920}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9.958, y: -9.996001, z: -3.8319628}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5738179364192041738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096075284004381920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e2f0f07ac1e846b28432e7924dee25a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  folderRoot: Meshes
+  meshGroupName: caraway
+  meshGroupPrefab: {fileID: 1009296405626445021, guid: edfab8dc789624e168df475c2bda668c, type: 3}
+  meshObjectPrefab: {fileID: 1956721574398820410, guid: 9c929600460b94bbfa34557cd8826720, type: 3}
+  meshMaterial: {fileID: 2100000, guid: c1a30cb1cf6644281a0a0fc0cadd6c91, type: 2}
+  scale: 0.008
+  depthScale: 1
+  globalDepthScale: 1000
+  addColliders: 0

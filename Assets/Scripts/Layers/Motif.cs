@@ -12,7 +12,7 @@ using System.Linq;
 // the motif will provide the apis for the moveable. That way we can
 // independently control motifs, and not all the moveables.
 // This should also reduce processing power
-public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMovableIterator
+public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMovableIterator, IFadable
 {
     public Moveable[] Moveables { get; private set; }
     public MaskLayer[] MaskLayers { get; private set; }
@@ -69,9 +69,11 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
     /// <summary>
     /// Set the opacity of all mask layers
     /// </summary>
-    public void SetOpacity(float opacity, bool useCurve = true)
+    public void SetOpacity(float opacity)
     {
-        if (useCurve) opacity = Mathf.Pow(opacity, _responseCurve);
+        // if (useCurve)
+        if (opacity != 0f) 
+            opacity = Mathf.Pow(opacity, _responseCurve);
         foreach (var mask in MaskLayers)
         {
             mask.SetOpacity(opacity);
@@ -135,6 +137,10 @@ public class Motif : MonoBehaviour, IComponentIterator, IMaskLayerIterator, IMov
         _opacityCoroutine = StartCoroutine(OpacityCoroutine(1f, duration, delay));
     }
 
+    public void CancelFade()
+    {
+        if (_opacityCoroutine != null) StopCoroutine(_opacityCoroutine);
+    }
 
     private Coroutine _opacityCoroutine;
 

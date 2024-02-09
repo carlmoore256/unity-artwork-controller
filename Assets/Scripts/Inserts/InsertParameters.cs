@@ -10,6 +10,9 @@ public abstract class InsertParameters
     public Dictionary<string, BaseParameterValue> BaseParameters { get; protected set; } =
         new Dictionary<string, BaseParameterValue>();
 
+    [JsonIgnore]
+    public Action<BaseParameterValue> OnParameterChanged;
+
     public InsertParameters()
     {
         InitializeParameterNames();
@@ -37,6 +40,7 @@ public abstract class InsertParameters
         if (BaseParameters.TryGetValue(name, out var paramValue))
         {
             paramValue.SetValue(value);
+            OnParameterChanged?.Invoke(paramValue);
         }
         else
         {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditorInternal;
 using UnityEngine;
 
 // we make a router object, that can route to additional places
@@ -12,15 +13,15 @@ using UnityEngine;
 
 // consider creating an abstract factory to create artworks
 
-[RequireComponent(typeof(ArtworkColorController))]
+[RequireComponent(typeof(FadeTransitionInsert))]
+// [RequireComponent(typeof(ArtworkColorController))]
 public class SegmentedPaintingArtwork
-    : MonoBehaviour,
+    : BaseArtwork,
         IComponentIterator,
         IMaskLayerIterator,
         IMovableIterator,
         IMotifIterator,
-        INetworkEndpoint,
-        IArtwork
+        INetworkEndpoint
 {
     [SerializeField]
     private int _index;
@@ -30,26 +31,28 @@ public class SegmentedPaintingArtwork
         set => _index = value;
     }
 
+    // public ITransitionInsert TransitionInsert { get; private set; }
+
     public string Address => $"/artwork/{Id}";
 
-    public string Id
-    {
-        get
-        {
-            if (string.IsNullOrEmpty(_id))
-            {
-                _id = gameObject.name.Split("Artwork__")[1];
-            }
-            return _id;
-        }
-    }
+    // public string Id => gameObject.name.Split("Artwork__")[1];  
 
-    private string _id;
-    public string Name => Id;
+    // public string Id
+    // {
+    //     get
+    //     {
+    //         if (string.IsNullOrEmpty(_id))
+    //         {
+    //             _id = gameObject.name.Split("Artwork__")[1];
+    //         }
+    //         return _id;
+    //     }
+    // }
+
+    // public override string Name => gameObject.name.Split("Artwork__")[1];
 
     // this is all any controller will ever need to access
     public List<Motif> Motifs = new List<Motif>();
-    public bool MarkedToDestroy = false;
 
     private List<Moveable> _allMoveables = new List<Moveable>();
     private List<MaskLayer> _allMaskLayers = new List<MaskLayer>();
@@ -69,10 +72,10 @@ public class SegmentedPaintingArtwork
         }
     }
 
-    public ArtworkMetadata GetMetadata()
-    {
-        return new ArtworkMetadata { id = Id, name = Id };
-    }
+    // public ArtworkMetadata GetMetadata()
+    // {
+    //     return new ArtworkMetadata { id = Id, name = Id, };
+    // }
 
     private void OnEnable()
     {
@@ -83,12 +86,24 @@ public class SegmentedPaintingArtwork
         {
             gameObject.name = $"Artwork__{gameObject.name}";
         }
-        var colorController = GetComponent<ArtworkColorController>();
-        colorController.ResetToTransparent();
-        colorController.FadeInEffect();
+        // var colorController = GetComponent<ArtworkColorController>();
+        // colorController.ResetToTransparent();
+        // colorController.FadeInEffect();
 
         Register($"artwork/{Id}");
+
+        // TransitionInsert = GetComponent<FadeTransitionInsert>();
+        // TransitionInsert.Initialize();
+        // TransitionInsert.TransitionIn(2f);
     }
+
+    // void Update()
+    // {
+    //     if (TransitionInsert != null)
+    //     {
+    //         Debug.Log($"TransitionInsert.PercentComplete {TransitionInsert.PercentComplete}");
+    //     }
+    // }
 
     private void OnDisable()
     {
@@ -117,44 +132,15 @@ public class SegmentedPaintingArtwork
         }
     }
 
-    public void RemoveFromScene(Action onComplete = null)
-    {
-        // destroys after things have faded out
-        var colorController = GetComponent<ArtworkColorController>();
-        if (colorController == null)
-        {
-            colorController = gameObject.AddComponent<ArtworkColorController>();
-        }
-        MarkedToDestroy = true;
-        colorController.FadeOutEffect(onComplete: () =>
-        {
-            onComplete?.Invoke();
-            FinalizeDestroy();
-        });
-    }
+    // public void Destroy()
+    // {
+    //     Destroy(gameObject);
+    // }
 
-    private void FinalizeDestroy()
-    {
-        if (!MarkedToDestroy)
-        {
-            Debug.Log("Artwork not marked to destroy, cancelling");
-            return;
-        }
-        ;
-        Debug.Log($"Destroying Artwork: {gameObject.name}");
-        Destroy(gameObject);
-    }
-
-    public void CancelDestroy()
-    {
-        if (!MarkedToDestroy)
-            return;
-        MarkedToDestroy = false;
-        Debug.Log($"Cancelling destroy for Artwork: {gameObject.name}");
-        // FadeIn();
-        GetComponent<ArtworkColorController>()
-            .FadeInEffect();
-    }
+    // public IInsert[] GetInserts()
+    // {
+    //     return GetComponents<IInsert>();
+    // }
 
     /// <summary>
     /// Add motif monobehaviours on to all direct descendents
@@ -171,7 +157,6 @@ public class SegmentedPaintingArtwork
                 Debug.Log("Skipping background", child.gameObject);
                 continue;
             }
-            ;
 
             if (child.gameObject.GetComponentsInChildren<MaskLayer>().Length == 0)
             {
@@ -388,8 +373,13 @@ public class SegmentedPaintingArtwork
         if (gameObject.GetComponent<PolyphonicMidiController>() == null)
             gameObject.AddComponent<PolyphonicMidiController>();
 
-        if (gameObject.GetComponent<ArtworkColorController>() == null)
-            gameObject.AddComponent<ArtworkColorController>();
+        // if (gameObject.GetComponent<ArtworkColorController>() == null)
+        //     gameObject.AddComponent<ArtworkColorController>();
+
+        /// if it has artworkColorcontroller, remove it
+        ///
+        if (gameObject.GetComponent<ArtworkColorController>() != null)
+            Destroy(gameObject.GetComponent<ArtworkColorController>());
 
         if (gameObject.GetComponent<LineTrailController>() == null)
             gameObject.AddComponent<LineTrailController>();
@@ -400,6 +390,7 @@ public class SegmentedPaintingArtwork
         gameObject.GetOrAddComponent<SinusoidalMotionInsert>();
         gameObject.GetOrAddComponent<RandomMotionInsert>();
         gameObject.GetOrAddComponent<MotifColorInsert>();
+        gameObject.GetOrAddComponent<PhysicsInsert>();
         gameObject.GetOrAddComponent<InsertParameterRouter>();
     }
 }

@@ -8,6 +8,7 @@ using UnityEngine.AI;
 public class BaseParameterValue
 {
     public string name;
+    public string description;
 
     // public virtual object Value { get; prote}
 
@@ -27,7 +28,6 @@ public class BaseParameterValue
 [System.Serializable]
 public class ParameterValue<T> : BaseParameterValue
 {
-    public string description;
     public T value;
     public T defaultValue;
 
@@ -117,7 +117,6 @@ public class RangedParameterValue : ParameterValue<float>
         this.max = max;
     }
 
-
     // create a new RangedParameterValue with a default value of 0, and a range of 0-1
     public static RangedParameterValue NormalizedRange(string description, float defaultValue = 0f)
     {
@@ -173,10 +172,19 @@ public class RangedParameterValue : ParameterValue<float>
     public override string Type => "RangedFloat";
 }
 
-// public static class BaseParameterValueExtensions
-// {
-//     public static Type GetBaseType(this BaseParameterValue parameter)
-//     {
-//         return parameter.GetType().BaseType;
-//     }
-// }
+public class TriggerParameterValue : BaseParameterValue
+{
+    public Action OnTrigger;
+    
+    public TriggerParameterValue(string description = "Trigger")
+    {
+        this.description = description;
+    }
+
+    public override void SetValue(object val)
+    {
+        OnTrigger?.Invoke();
+    }
+
+    public override string Type => "Trigger";
+}

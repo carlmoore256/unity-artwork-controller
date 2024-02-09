@@ -54,9 +54,15 @@ public class SceneWebsocketHandler : MonoBehaviour
         {
             var thumbnailTexture = ArtworkLoader.Instance.GetArtworkThumbnail(artwork);
             string thumbnailString = thumbnailTexture != null ? thumbnailTexture.ToBase64() : null;
+            bool enabled = _artworkSceneController.IsArtworkEnabled(artwork);
             WebSocketHost.Instance.Broadcast(
                 new WebSocketSendMessageData(
-                    new { metadata = artwork.GetMetadata(), thumbnail = thumbnailString },
+                    new
+                    {
+                        metadata = artwork.GetMetadata(),
+                        thumbnail = thumbnailString,
+                        enabled
+                    },
                     "artwork-available"
                 )
             );

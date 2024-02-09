@@ -3,11 +3,6 @@
 // some aspects about the gameobject. The actual 
 // way it does this depends on the concrete implementation
 
-// public interface IInsert
-// {
-//     // Define any common properties or methods here, if needed
-// }
-
 using System.Collections.Generic;
 
 public interface IInsert

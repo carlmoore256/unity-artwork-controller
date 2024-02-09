@@ -13,15 +13,10 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
     public Action<ArtworkMetadata> OnArtworkEnabled;
     public Action<ArtworkMetadata> OnArtworkDisabled;
 
-    // public GameObject[] ArtworkPrefabs
-    // {
-    //     get { return _artworkPrefabs; }
-    // }
-
     [SerializeField]
     private int _maxDisabledArtworks = 3;
     private int _currentlySelectedArtworkIndex = 0;
-    public SegmentedPaintingArtwork[] ActiveArtworks => gameObject.GetComponentsInChildren<SegmentedPaintingArtwork>();
+    public IArtwork[] ActiveArtworks => gameObject.GetComponentsInChildren<IArtwork>();
 
     // [SerializeField]
     // private GameObject[] _artworkPrefabs;
@@ -29,11 +24,10 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
     public string ResourcePath = "Artworks";
     private readonly string _artworkNamePrefix = "Artwork__";
 
-    // private EndpointHandler _endpointHandler;
-
-
-    // what if there was an IParameterizedController interface?
-    // that exposed a list of all the parameters
+    private ArtworkTransitionManager _artworkTransitionManager = new ArtworkTransitionManager(
+        1f,
+        1f
+    );
 
     void OnEnable()
     {
@@ -57,18 +51,18 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
     public void Register(string address)
     {
         // make these endpoints fill in controller as the gameObject name
-        OscManager.Instance.AddEndpoint(
-            $"{address}/toggleArtworkIdx",
-            (OscDataHandle dataHandle) =>
-            {
-                var value = dataHandle.GetElementAsInt(0);
-                Debug.Log(
-                    $"Toggled Artwork index {value} | number of artworks {ActiveArtworks.Length}"
-                );
-                ToggleArtworkByIndex(value);
-            },
-            this
-        );
+        // OscManager.Instance.AddEndpoint(
+        //     $"{address}/toggleArtworkIdx",
+        //     (OscDataHandle dataHandle) =>
+        //     {
+        //         var value = dataHandle.GetElementAsInt(0);
+        //         Debug.Log(
+        //             $"Toggled Artwork index {value} | number of artworks {ActiveArtworks.Length}"
+        //         );
+        //         ToggleArtworkByIndex(value);
+        //     },
+        //     this
+        // );
 
         OscManager.Instance.AddEndpoint(
             $"{address}/toggleArtwork",
@@ -92,27 +86,27 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
             this
         );
 
-        OscManager.Instance.AddEndpoint(
-            $"{address}/enableArtwork",
-            (OscDataHandle dataHandle) =>
-            {
-                var value = dataHandle.GetElementAsString(0);
-                Debug.Log($"Enable Artwork {value}");
-                EnableArtworkById(value);
-            },
-            this
-        );
+        // OscManager.Instance.AddEndpoint(
+        //     $"{address}/enableArtwork",
+        //     (OscDataHandle dataHandle) =>
+        //     {
+        //         var value = dataHandle.GetElementAsString(0);
+        //         Debug.Log($"Enable Artwork {value}");
+        //         EnableArtworkById(value);
+        //     },
+        //     this
+        // );
 
-        OscManager.Instance.AddEndpoint(
-            $"{address}/disableArtwork",
-            (OscDataHandle dataHandle) =>
-            {
-                var value = dataHandle.GetElementAsString(0);
-                Debug.Log($"Disable Artwork {value}");
-                DisableArtworkById(value);
-            },
-            this
-        );
+        // OscManager.Instance.AddEndpoint(
+        //     $"{address}/disableArtwork",
+        //     (OscDataHandle dataHandle) =>
+        //     {
+        //         var value = dataHandle.GetElementAsString(0);
+        //         Debug.Log($"Disable Artwork {value}");
+        //         DisableArtworkById(value);
+        //     },
+        //     this
+        // );
 
         OscManager.Instance.AddEndpoint(
             $"{address}/clear",
@@ -125,123 +119,66 @@ public class ArtworkSceneController : MonoBehaviour, INetworkEndpoint
         );
     }
 
+    public bool IsArtworkEnabled(IArtwork artwork)
+    {
+        return ActiveArtworks.Any(x => x.Id == artwork.Id);
+    }
+
     public void ClearScene()
     {
         foreach (var artwork in ActiveArtworks)
         {
-            artwork.RemoveFromScene();
+            _artworkTransitionManager.TransitionArtworkOut(artwork, () => { });
         }
     }
 
-    // [NetworkEndpoint("/enableArtwork")]
-    public void EnableArtworkById(string id)
+    private IArtwork InstantiateArtworkById(string id)
     {
-        string artworkName = $"{_artworkNamePrefix}{id}";
-        Debug.Log($"Attempting to enable Artwork {id}");
-
-        // find any existing gameobjects with the same name
-        // var artwork = ActiveArtworks.Find(x => x.Id == id);
-        var activeArtwork = ActiveArtworks.FirstOrDefault(x => x.gameObject.name == artworkName);
-
-        if (activeArtwork != null)
-        {
-            Debug.Log($"Artwork {id} already active");
-            activeArtwork.CancelDestroy();
-            return;
-        }
-
         var artworkPrefab = ArtworkLoader.Instance.GetArtworkPrefab(id);
         if (artworkPrefab == null)
         {
             Debug.Log($"Artwork {id} not found");
-            return;
+            return null;
         }
-
         var newArtwork = Instantiate(artworkPrefab, Vector3.zero, Quaternion.identity);
         newArtwork.transform.parent = transform;
-        OnArtworkEnabled?.Invoke(newArtwork.GetComponent<SegmentedPaintingArtwork>().GetMetadata());
+        var artworkComponent = newArtwork.GetComponent<IArtwork>();
+        return artworkComponent;
     }
 
-    private void DisableArtworkById(string id)
-    {
-        var artwork = ActiveArtworks.FirstOrDefault(x => x.Id == id);
-        if (artwork == null)
-            return;
-        Debug.Log($"Disabling Artwork {artwork.gameObject.name}");
-        var info = artwork.GetMetadata();
-        artwork.RemoveFromScene(() => OnArtworkDisabled?.Invoke(info));
-    }
-
-    public void ToggleArtwork(IArtwork artwork)
-    {
-        ToggleArtworkById(artwork.Id);
-    }
+    public void ToggleArtwork(IArtwork artwork) => ToggleArtworkById(artwork.Id);
 
     public void ToggleArtworkById(string id)
     {
         var artwork = ActiveArtworks.FirstOrDefault(x => x.Id == id);
         if (artwork == null)
         {
-            EnableArtworkById(id); // turn the artwork on
-        }
-        else
-        {
-            // if the artwork is pending destruction, turn it back on
-            if (artwork.MarkedToDestroy)
-            {
-                artwork.CancelDestroy();
+            // EnableArtworkById(id); // turn the artwork on
+            artwork = InstantiateArtworkById(id);
+            if (artwork == null)
                 return;
+        }
+
+        _artworkTransitionManager.ToggleTransition(
+            artwork,
+            () =>
+            {
+                OnArtworkEnabled?.Invoke(artwork.GetMetadata());
+                Debug.Log($"Artwork {artwork.Id} toggled on");
+            },
+            () =>
+            {
+                OnArtworkDisabled?.Invoke(artwork.GetMetadata());
+                Debug.Log($"Artwork {artwork.Id} toggled off");
+            },
+            (TransitionState state) =>
+            {
+                Debug.Log($"Artwork {artwork.Id} toggled {state}");
+                if (state == TransitionState.In)
+                {
+                    OnArtworkEnabled?.Invoke(artwork.GetMetadata());
+                }
             }
-            DisableArtworkById(id);
-        }
-    }
-
-    private void ToggleArtworkByIndex(int index)
-    {
-        var artwork = ActiveArtworks.FirstOrDefault(x => x.Index == (int)index);
-
-        if (artwork == null)
-        {
-            Debug.Log($"Artwork {index} not found");
-            return;
-        }
-
-        Debug.Log($"Toggling Artwork {artwork.Index}");
-
-        if (artwork.gameObject.activeSelf)
-        {
-            artwork.RemoveFromScene();
-            // StartCoroutine(ToggleOffArtwork(artwork));
-        }
-        else
-        {
-            artwork.gameObject.SetActive(true);
-            var colorController = artwork.GetComponent<ArtworkColorController>();
-            colorController.FadeInEffect(0, 5);
-        }
-    }
-
-    private IEnumerator ToggleOffArtwork(SegmentedPaintingArtwork artwork)
-    {
-        artwork.GetComponent<ArtworkColorController>().FadeOutEffect(0, 3);
-        yield return new WaitForSeconds(3.3f);
-        if (!artwork.MarkedToDestroy)
-        {
-            artwork.CancelDestroy();
-        }
-        else
-        {
-            artwork.gameObject.SetActive(false);
-        }
-    }
-
-    public Vector3 GetArtworkPosition(int index)
-    {
-        var artwork = ActiveArtworks.FirstOrDefault(x => x.Index == (int)index);
-
-        if (artwork == null)
-            return Vector3.zero;
-
-        return artwork.transform.position;
+        );
     }
 }

@@ -74,6 +74,8 @@ public class SpritePhysicsController : MonoBehaviour, INetworkEndpoint, IArtwork
                 {
                     var direction = sprite.transform.position - center;
                     sprite.AddForce(direction * dataHandle.GetElementAsFloat(0));
+
+                    // there is a rigidbody.AddExplosionForce() method that might be useful
                 }
             },
             this
@@ -144,7 +146,7 @@ public class SpritePhysicsController : MonoBehaviour, INetworkEndpoint, IArtwork
             EnableSpritePhysicsComponents();
             foreach (var sprite in _allSpritePhysics)
             {
-                sprite.TogglePhysics(enabled);
+                sprite.SetEnabled(enabled);
             }
         }
         else
@@ -160,7 +162,8 @@ public class SpritePhysicsController : MonoBehaviour, INetworkEndpoint, IArtwork
 
         foreach (var sprite in _allSpritePhysics)
         {
-            sprite.ToggleGravity(enabled);
+            // sprite.SetGravityEnabled(enabled);
+            sprite.Rigidbody.useGravity = GravityEnabled;
         }
     }
 }

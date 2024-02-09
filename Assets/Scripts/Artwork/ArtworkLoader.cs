@@ -74,6 +74,7 @@ public class ArtworkLoader : MonoBehaviour
         if (texture == null)
         {
             Debug.LogError($"No thumbnail found at {path}");
+            return null;
         }
         // we have to duplicate to get a valid readable texture
         return texture.Duplicate();

@@ -7,44 +7,15 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 
-public class MeshObjectMetadata
-{
-    public string meshFile;
-    public string textureFile;
-    public string normalFile;
-    public float[] bbox;
-    public float area;
-    public float sampleDensity;
-    public float simplifyEps;
-    public float minSampleDist;
-    public int numVerts;
-    public float globalDepth;
-}
-
-public class MeshGroupMetadata
-{
-    public string name;
-    public string imageFile;
-    public MeshObjectMetadata[] meshes;
-    public float[] bbox;
-    public int numPaths;
-    public int numMeshes;
-    public int numVerts;
-    public float area;
-    public int width;
-    public int height;
-}
-
 #if UNITY_EDITOR
+// for use in editor-only scenes
 public class MeshGroupImporter : MonoBehaviour
 {
     [Header("Resource Location")]
-    public string folderRoot = "Meshes";
+    public static string folderRoot = "Meshes";
     public string meshGroupName;
     public string MeshGroupRoot => Path.Combine("Assets", folderRoot, meshGroupName);
-
-    // [Header("Load Parameters")]
-    // public float offsetScalar = 0.01f;
+    public string namePrefix = "MeshGroup__";
 
     public GameObject meshGroupPrefab;
     public GameObject meshObjectPrefab;
@@ -55,21 +26,28 @@ public class MeshGroupImporter : MonoBehaviour
     public float globalDepthScale = 10.0f;
     public bool addColliders = false;
 
-    private Texture2D LoadTexture(string filename)
+    private static string GetMeshGroupRoot(string meshGroupName)
     {
-        string path = Path.Combine(MeshGroupRoot, filename);
+        return Path.Combine("Assets", folderRoot, meshGroupName);
+    }
+
+    private static Texture2D LoadTextureFromAssets(string meshGroupRoot, string filename)
+    {
+        string path = Path.Combine(meshGroupRoot, filename);
         return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 
-    private Mesh LoadMesh(string filename)
+    private static Mesh LoadMeshFromAssets(string meshGroupRoot, string filename)
     {
-        string path = Path.Combine(MeshGroupRoot, filename);
+        string path = Path.Combine(meshGroupRoot, filename);
         return AssetDatabase.LoadAssetAtPath<Mesh>(path);
     }
 
-    public MeshGroupMetadata LoadGroupMetadata()
+    public static MeshGroupMetadata LoadGroupMetadata(string meshGroupName)
     {
-        string metadataPath = Path.Combine(MeshGroupRoot, "metadata.json");
+        string meshGroupRoot = GetMeshGroupRoot(meshGroupName);
+
+        string metadataPath = Path.Combine(meshGroupRoot, "metadata.json");
 
         // Ensure the asset is imported and up-to-date
         AssetDatabase.ImportAsset(metadataPath, ImportAssetOptions.ForceUpdate);
@@ -104,17 +82,19 @@ public class MeshGroupImporter : MonoBehaviour
     }
 
     private void SpawnMeshObject(
-        MeshObjectMetadata metadata,
-        Transform parent,
+        string meshGroupRoot,
+        MeshObjectMetadata objectMetadata,
         MeshGroupMetadata groupMetadata,
+        Transform parent,
         bool addCollider = false
     )
     {
-        var bbox = metadata.bbox;
-        var texture = LoadTexture(metadata.textureFile);
-        var normalMap = LoadTexture(metadata.normalFile);
-        var mesh = LoadMesh(metadata.meshFile);
+        var bbox = objectMetadata.bbox;
+        var texture = LoadTextureFromAssets(meshGroupRoot, objectMetadata.textureFile);
+        var normalMap = LoadTextureFromAssets(meshGroupRoot, objectMetadata.normalFile);
+        var mesh = LoadMeshFromAssets(meshGroupRoot, objectMetadata.meshFile);
         var meshObject = Instantiate(meshObjectPrefab, parent);
+        meshObject.name = objectMetadata.MeshLayerName;
         // meshObject.name = $"MeshObject__{metadata.meshFile}";
         meshObject.GetOrAddComponent<MeshFilter>().mesh = mesh;
 
@@ -137,16 +117,18 @@ public class MeshGroupImporter : MonoBehaviour
             meshCollider.sharedMesh = mesh;
             meshCollider.convex = true;
             meshObject.GetOrAddComponent<Rigidbody>().useGravity = false;
+            meshObject.GetOrAddComponent<MeshPhysicsController>();
         }
 
-        PositionMeshObject(meshObject, metadata, groupMetadata);
+        PositionMeshObject(meshObject, objectMetadata, groupMetadata, globalDepthScale);
         // meshObject.transform.localScale = new Vector3(scale, scale, scale);
     }
 
-    private void PositionMeshObject(
+    private static void PositionMeshObject(
         GameObject meshObject,
         MeshObjectMetadata metadata,
-        MeshGroupMetadata groupMetadata
+        MeshGroupMetadata groupMetadata,
+        float globalDepthScale = 10.0f
     )
     {
         // apply translations based on bbox
@@ -165,18 +147,29 @@ public class MeshGroupImporter : MonoBehaviour
 
     public void ImportMeshGroup()
     {
-        var metadata = LoadGroupMetadata();
+        // var metadata = LoadGroupMetadata(meshGroupName);
+        var metadata = MeshGroupMetadataExtensions.LoadFromAssets(meshGroupName);
         Debug.Log($"Loaded metadata: {metadata.name}");
 
-        string name = $"MeshGroup__{metadata.name}";
+        string name = $"{namePrefix}{metadata.name}";
         RemoveExistingChildren(name);
 
         var meshGroupParent = Instantiate(meshGroupPrefab, transform);
         meshGroupParent.name = name;
+        meshGroupParent.GetOrAddComponent<MeshSegmentsArtwork>();
 
-        foreach (var meshMetadata in metadata.meshes)
+        string meshGroupRoot = GetMeshGroupRoot(metadata.name);
+
+        for (int i = 0; i < metadata.meshes.Length; i++)
         {
-            SpawnMeshObject(meshMetadata, meshGroupParent.transform, metadata, addColliders);
+            var meshMetadata = metadata.meshes[i];
+            SpawnMeshObject(
+                meshGroupRoot,
+                meshMetadata,
+                metadata,
+                meshGroupParent.transform,
+                addColliders
+            );
         }
 
         meshGroupParent.transform.localScale = new Vector3(scale, scale, scale * depthScale);
@@ -200,9 +193,29 @@ public class MeshGroupImporter : MonoBehaviour
             child.transform.position -= center;
         }
         // transform.position = new Vector3(-center.x, -center.y, -center.z);
-
-
-
     }
 }
+
+public static class MeshGroupMetadataExtensions
+{
+    public static MeshGroupMetadata LoadFromAssets(
+        string meshGroupName,
+        string meshesRoot = "Assets/Meshes"
+    )
+    {
+        string groupRoot = Path.Combine(meshesRoot, meshGroupName);
+        string metadataPath = Path.Combine(groupRoot, "metadata.json");
+        // Ensure the asset is imported and up-to-date
+        AssetDatabase.ImportAsset(metadataPath, ImportAssetOptions.ForceUpdate);
+        TextAsset metadataAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(metadataPath);
+        if (metadataAsset == null)
+        {
+            Debug.LogError("Failed to load metadata.json");
+            return null;
+        }
+        string json = metadataAsset.text;
+        return JsonConvert.DeserializeObject<MeshGroupMetadata>(json);
+    }
+}
+
 #endif

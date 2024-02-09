@@ -2,6 +2,7 @@ using System;
 using OscJack;
 using UnityEngine;
 
+
 // [RequireComponent(typeof(Moveable))]
 public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkController
 {
@@ -38,7 +39,7 @@ public class ArtworkColorController : MonoBehaviour, INetworkEndpoint, IArtworkC
         Artwork.ForeachMotif(
             (motif) =>
             {
-                motif.SetOpacity(0f, false);
+                motif.SetOpacity(0f);
             }
         );
     }
