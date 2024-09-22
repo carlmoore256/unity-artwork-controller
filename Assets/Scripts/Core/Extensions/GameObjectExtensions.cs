@@ -29,7 +29,9 @@ public static class GameObjectExtensions
         }
 
         // If there are multiple components of the same type, include the index in the ID
+        // return component.gameObject.GetInstanceID();
         return $"{component.gameObject.name}_{componentType.Name}_{index}";
+        // return $"{component.gameObject.GetInstanceID()}_{componentType.Name}_{index}";
     }
 }
 
@@ -39,6 +41,11 @@ public class MonoBehaviourWithId : MonoBehaviour
     {
         get
         {
+
+            // if (string.IsNullOrEmpty(_id))
+            // {
+            //     _id = Guid.NewGuid().ToString();
+            // }
             if (string.IsNullOrEmpty(_id))
             {
                 _id = this.GetUniqueComponentId();

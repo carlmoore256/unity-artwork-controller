@@ -1,17 +1,17 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(SceneWebsocketHandler))]
+[CustomEditor(typeof(ArtworkSceneWebsocketService))]
 public class SceneWebsocketHandlerEditor : Editor
 {
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
 
-        SceneWebsocketHandler sceneWebsocketHandler = (SceneWebsocketHandler)target;
+        ArtworkSceneWebsocketService sceneWebsocketHandler = (ArtworkSceneWebsocketService)target;
         if (GUILayout.Button("Broadcast Artworks Available"))
         {
-            sceneWebsocketHandler.BroadcastArtworksAvailable();
+            // sceneWebsocketHandler.BroadcastArtworksAvailable();
         }
     }
 }

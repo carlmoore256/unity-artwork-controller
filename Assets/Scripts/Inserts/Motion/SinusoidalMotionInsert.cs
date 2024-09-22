@@ -46,7 +46,6 @@ public class SinusoidalMotionInsertParameters : InsertParameters
     public ParameterValue<float> fooBar = new(0.5f);
 }
 
-
 public class SinusoidalMotionInsert : MonoBehaviourWithId, INetworkEndpoint, IInsert
 {
     public string Name => "Sinusoidal Motion";
@@ -243,6 +242,13 @@ public class SinusoidalMotionInsert : MonoBehaviourWithId, INetworkEndpoint, IIn
                 _targetSnapshots.Add(moveable, moveable.CurrentSnapshot);
             }
         );
+
+        _parameters.moveXAmp.OnValueChanged += (float amp) =>
+        {
+            Debug.Log(
+                $"[SinusoidalMotionInsert] moveXAmp changed to {amp} | {gameObject.name} | {Id}"
+            );
+        };
     }
 
     public void LerpReset(float value)

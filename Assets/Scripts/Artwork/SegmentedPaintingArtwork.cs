@@ -391,6 +391,6 @@ public class SegmentedPaintingArtwork
         gameObject.GetOrAddComponent<RandomMotionInsert>();
         gameObject.GetOrAddComponent<MotifColorInsert>();
         gameObject.GetOrAddComponent<PhysicsInsert>();
-        gameObject.GetOrAddComponent<InsertParameterRouter>();
+        // gameObject.GetOrAddComponent<InsertParameterRouter>();
     }
 }

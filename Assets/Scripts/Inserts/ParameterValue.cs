@@ -47,7 +47,6 @@ public class ParameterValue<T> : BaseParameterValue
 
     public override void SetValue(object val)
     {
-        Debug.Log($"ParameterValue.SetValue called with {val}");
         if (val is T t)
         {
             Debug.Log($"ParameterValue.SetValue called with {t} | {val}");
@@ -174,6 +173,7 @@ public class RangedParameterValue : ParameterValue<float>
 
 public class TriggerParameterValue : BaseParameterValue
 {
+    [JsonIgnore]
     public Action OnTrigger;
     
     public TriggerParameterValue(string description = "Trigger")

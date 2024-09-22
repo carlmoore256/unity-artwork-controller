@@ -15,10 +15,16 @@ public struct ArtworkMetadata
 {
     public string id;
     public string name;
+    public bool isEnabled;
 
     public static ArtworkMetadata FromIArtwork(IArtwork artwork)
     {
-        return new ArtworkMetadata { id = artwork.Id, name = artwork.Name };
+        return new ArtworkMetadata
+        {
+            id = artwork.Id,
+            name = artwork.Name,
+            isEnabled = artwork.IsEnabled
+        };
     }
 }
 
@@ -29,6 +35,7 @@ public interface IArtwork
 {
     string Id { get; }
     string Name { get; }
+    bool IsEnabled { get; }
 
     ArtworkMetadata GetMetadata();
     IInsert[] GetInserts();

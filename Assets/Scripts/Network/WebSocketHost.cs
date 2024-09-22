@@ -19,7 +19,10 @@ public class WebSocketHost : MonoBehaviour
 
     public Action<string> OnClientConnected;
     public Action<WebSocketReceiveMessageData> OnMessageReceived;
-    private Dictionary<string, Action<WebSocketReceiveMessageData>> _listeners = new Dictionary<string, Action<WebSocketReceiveMessageData>>();
+    private Dictionary<string, Action<WebSocketReceiveMessageData>> _listeners =
+        new Dictionary<string, Action<WebSocketReceiveMessageData>>();
+    private Dictionary<string, List<IWebSocketMessageHandler>> _messageHandlers =
+        new Dictionary<string, List<IWebSocketMessageHandler>>();
 
     public string Endpoint { get; } = "/Unity";
 
@@ -39,7 +42,9 @@ public class WebSocketHost : MonoBehaviour
         {
             _listeners[messageType] += listener;
             return;
-        } else {
+        }
+        else
+        {
             _listeners[messageType] = listener;
         }
     }
@@ -49,6 +54,27 @@ public class WebSocketHost : MonoBehaviour
         if (_listeners.ContainsKey(messageType))
         {
             _listeners[messageType] -= listener;
+        }
+    }
+
+    public void RegisterMessageHandler(string messageType, IWebSocketMessageHandler handler)
+    {
+        if (_messageHandlers.ContainsKey(messageType))
+        {
+            _messageHandlers[messageType].Add(handler);
+            return;
+        }
+        else
+        {
+            _messageHandlers[messageType] = new List<IWebSocketMessageHandler> { handler };
+        }
+    }
+
+    public void UnregisterMessageHandler(string messageType, IWebSocketMessageHandler handler)
+    {
+        if (_messageHandlers.ContainsKey(messageType))
+        {
+            _messageHandlers[messageType].Remove(handler);
         }
     }
 
@@ -82,16 +108,26 @@ public class WebSocketHost : MonoBehaviour
 
     public void ClientMessageReceived(string clientId, string message)
     {
-        Dispatcher.RunOnMainThread(() =>
+        var messageData = WebSocketReceiveMessageData.ParseMessage(message);
+
+        if (_listeners.ContainsKey(messageData.messageType))
         {
-            // Debug.Log("Client message received: " + message);
-            // Handle client message
-            var messageData = WebSocketReceiveMessageData.ParseMessage(message);
-            if (_listeners.ContainsKey(messageData.messageType))
+            Dispatcher.RunOnMainThread(() =>
             {
                 _listeners[messageData.messageType]?.Invoke(messageData);
-            }
-        });
+            });
+        }
+
+        if (_messageHandlers.ContainsKey(messageData.messageType))
+        {
+            Dispatcher.RunOnMainThread(() =>
+            {
+                foreach (var handler in _messageHandlers[messageData.messageType])
+                {
+                    handler.HandleMessage(messageData);
+                }
+            });
+        }
     }
 
     void OnDestroy()
@@ -131,6 +167,7 @@ public class WebSocketHost : MonoBehaviour
 
     public void Broadcast(WebSocketSendMessageData data)
     {
+        // UnityEngine.Debug.Log($"Broadcasting {data.ToJson()}");
         wss.WebSocketServices[Endpoint].Sessions.Broadcast(data.ToJson());
     }
 }

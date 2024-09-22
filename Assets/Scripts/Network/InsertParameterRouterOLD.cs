@@ -36,7 +36,7 @@ public class InsertParameterRouter : MonoBehaviour
                 new WebSocketSendMessageData(insertData, "insert-info")
             );
 
-            WebSocketHost.Instance.AddListener("insert-patch", OnInsertParameterPatch);
+            // WebSocketHost.Instance.AddListener("insert-patch", OnInsertParameterPatch);
 
             // we have to remove the IArtwork after destroying the object
         }
@@ -44,12 +44,12 @@ public class InsertParameterRouter : MonoBehaviour
 
     private void OnDisable()
     {
-        WebSocketHost.Instance.RemoveListener("insert-patch", OnInsertParameterPatch);
+        // WebSocketHost.Instance.RemoveListener("insert-patch", OnInsertParameterPatch);
     }
 
     private void OnDestroy()
     {
-        WebSocketHost.Instance.RemoveListener("insert-patch", OnInsertParameterPatch);
+        // WebSocketHost.Instance.RemoveListener("insert-patch", OnInsertParameterPatch);
     }
 
     private void OnInsertParameterPatch(WebSocketReceiveMessageData messageData)
